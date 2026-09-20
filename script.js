@@ -67,9 +67,9 @@ const CONFIG = {
   SUBSCRIPTION_CHANNEL_URL: 'https://t.me/telegramchannelname',
   // Your backend endpoint that checks membership server-side (bot token
   // never touches the frontend). Expected response: { "subscribed": true|false }.
-  // Point this at whichever of your backends you add the endpoint to —
-  // defaults to the same data-store backend the app already talks to.
-  SUBSCRIPTION_CHECK_URL: 'https://vgdatastorage-production.up.railway.app/check-subscription'
+  // This route is served by the main bot (bot.js / messageHandlers.js), the same
+  // service as /create-invoice, NOT by the data store, which has no such route.
+  SUBSCRIPTION_CHECK_URL: 'https://vgservers-production.up.railway.app/check-subscription'
 };
 
 const PRIZE_COIN_VALUES = {
@@ -1522,6 +1522,7 @@ const Utils = {
 // Standalone TON on-chain payment backend (ton-payments.js). Fully
 // independent of vgtserver (gift transactor) and vgservers (Stars invoices).
 const TON_API_BASE = 'https://ton-backend347-production.up.railway.app';
+const INVOICE_API_BASE = 'https://vgservers-production.up.railway.app'; // main bot: /create-invoice, /stars/claim-credits, /check-subscription
 
 // VGDataStorage — Postgres-backed service that also holds the shared
 // users table (profile + coins/stars) the global leaderboard reads from.
@@ -1653,6 +1654,42 @@ const BackendAPI = {
     }
   },
 
+  // ── Telegram Stars purchases ──
+  // After a successful invoice the bot records an unclaimed credit
+  // (GET /stars/claim-credits, authenticated with Telegram initData). Nothing
+  // is pushed to the app, so it has to be collected here, same idea as TON.
+  async claimStarCredits() {
+    const initData = STATE.tg?.initData;
+    if (!initData) return 0;
+    try {
+      const res = await fetch(`${INVOICE_API_BASE}/stars/claim-credits`, {
+        headers: { 'X-Telegram-Init-Data': initData }
+      });
+      if (!res.ok) return 0;
+      const data = await res.json();
+      if (data.stars > 0) Currency.addStars(data.stars);
+      return data.stars || 0;
+    } catch (err) {
+      console.error('❌ claimStarCredits failed:', err);
+      return 0;
+    }
+  },
+
+  // The payment update reaches the bot a moment after the popup reports
+  // "paid", so keep asking for a short while before giving up (the safety
+  // net in syncBalance() picks it up later if it is slower than this).
+  async waitForStarCredits(expected) {
+    for (let i = 0; i < 12; i++) {
+      await new Promise(r => setTimeout(r, i === 0 ? 800 : 1500));
+      const got = await this.claimStarCredits();
+      if (got > 0) {
+        Utils.showToast(Utils.t('starsAdded', { n: got }), 'success');
+        return got;
+      }
+    }
+    return 0;
+  },
+
   // ── Sync both ──
 
   async syncBalance() {
@@ -1672,6 +1709,7 @@ const BackendAPI = {
     // Safety net: picks up any TON credit that got confirmed after the
     // purchase flow stopped waiting (app closed, tab backgrounded, etc).
     this.claimTonCredits();
+    this.claimStarCredits();
   },
 
   startPeriodicSync() {
@@ -3346,7 +3384,7 @@ const Deposit = {
     Utils.showToast(Utils.t('creatingInvoice'), 'success');
 
     try {
-      const res = await fetch('https://vgservers-production.up.railway.app/create-invoice', {
+      const res = await fetch(`${INVOICE_API_BASE}/create-invoice`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, productId: pkg.id })
@@ -3358,7 +3396,7 @@ const Deposit = {
       STATE.tg.openInvoice(data.invoiceLink, async (status) => {
         if (status === 'paid') {
           Utils.showToast(Utils.t('paymentSuccessAdding', { n: pkg.stars }), 'success');
-          setTimeout(() => BackendAPI.syncBalance(), 1500);
+          BackendAPI.waitForStarCredits(pkg.stars);
         } else if (status === 'cancelled') {
           Utils.showToast(Utils.t('paymentCancelled'), 'error');
         } else if (status === 'failed') {
