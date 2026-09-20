@@ -63,8 +63,8 @@ const CONFIG = {
   // getChatMember — see the /check-subscription snippet notes). CHANNEL_URL
   // is what actually opens when the user taps the "join" button in the popup.
   SUBSCRIPTION_REQUIRED: true,
-  SUBSCRIPTION_CHANNEL_USERNAME: '@telegramchannelname',
-  SUBSCRIPTION_CHANNEL_URL: 'https://t.me/telegramchannelname',
+  SUBSCRIPTION_CHANNEL_USERNAME: '@VoidGiftsOfficial',
+  SUBSCRIPTION_CHANNEL_URL: 'https://t.me/VoidGiftsOfficial',
   // Your backend endpoint that checks membership server-side (bot token
   // never touches the frontend). Expected response: { "subscribed": true|false }.
   // This route is served by the main bot (bot.js / messageHandlers.js), the same
