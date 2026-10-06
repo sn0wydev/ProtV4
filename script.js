@@ -43,6 +43,7 @@ const CONFIG = {
   CUBE_WIDTH: 120,
   GAP_WIDTH: 48,
   BALANCE_SYNC_INTERVAL: 30000,
+  DAILY_COOLDOWN_MS: 24 * 60 * 60 * 1000,   // Daily Spin: one spin per 24h
 
   // ── Void Spin (second wheel, home-page banner) ──
   // Own knobs, not shared with the daily wheel's CONFIG values above —
@@ -57,14 +58,23 @@ const CONFIG = {
   VOID_CUBE_WIDTH: 120,
   VOID_GAP_WIDTH: 48,
 
+  // ── Furry Spin (third wheel) ──
+  // Same engine and same knobs as Void Spin, tunable on their own. The 120px
+  // cube + 48px gap must stay in step with the .cube CSS, same as above.
+  FURRY_SPIN_COST: 50,         // Stars deducted the moment Spin is pressed
+  FURRY_SPIN_DURATION: 4500,
+  FURRY_SPIN_MAX_SPEED: 25,
+  FURRY_CUBE_WIDTH: 120,
+  FURRY_GAP_WIDTH: 48,
+
   // ── Telegram channel subscription gate ──
   // Both wheels require this before they'll spin. CHANNEL_USERNAME is the
   // @handle (without the @ in the chat_id your backend sends to Telegram's
   // getChatMember — see the /check-subscription snippet notes). CHANNEL_URL
   // is what actually opens when the user taps the "join" button in the popup.
   SUBSCRIPTION_REQUIRED: true,
-  SUBSCRIPTION_CHANNEL_USERNAME: '@VoidGiftsOfficial',
-  SUBSCRIPTION_CHANNEL_URL: 'https://t.me/VoidGiftsOfficial',
+  SUBSCRIPTION_CHANNEL_USERNAME: '@telegramchannelname',
+  SUBSCRIPTION_CHANNEL_URL: 'https://t.me/telegramchannelname',
   // Your backend endpoint that checks membership server-side (bot token
   // never touches the frontend). Expected response: { "subscribed": true|false }.
   // This route is served by the main bot (bot.js / messageHandlers.js), the same
@@ -89,11 +99,16 @@ const PRIZE_COIN_VALUES = {
   // for these three are still placeholders, see TELEGRAM_GIFT_IDS below. ──
   'Rocket': 400,
   'Star Notepad': 1250,
-  'Instant Ramen': 1100
+  'Instant Ramen': 1100,
+
+  // ── Furry Spin ──
+  'Champagne': 150,
+  'Socks': 900,
+  'Lollipop': 800
 };
 
-const RARE_GIFTS  = ['Ring', 'Trophy', 'Diamond', 'Calendar', 'Rocket', 'Star Notepad', 'Instant Ramen'];
-const NFT_GIFTS   = ['Calendar', 'Star Notepad', 'Instant Ramen'];
+const RARE_GIFTS  = ['Ring', 'Trophy', 'Diamond', 'Calendar', 'Rocket', 'Star Notepad', 'Instant Ramen', 'Socks', 'Lollipop'];
+const NFT_GIFTS   = ['Calendar', 'Star Notepad', 'Instant Ramen', 'Socks', 'Lollipop'];
 
 // Static SVG icons used everywhere EXCEPT the spin wheel cubes/win-reveal
 // wheel animation, which keep the Lottie JSON (that's the one place the
@@ -118,7 +133,12 @@ const GIFT_SVG_ICONS = {
   // prize modal, notifications) already looks them up by this map. ──
   'Rocket':        'assets/Rocket.svg',
   'Star Notepad':  'assets/StarNotepad.svg',
-  'Instant Ramen': 'assets/InstantRamen.svg'
+  'Instant Ramen': 'assets/InstantRamen.svg',
+
+  // ── Furry Spin ──
+  'Champagne':     'assets/Champagne.svg',
+  'Socks':         'assets/Socks.svg',
+  'Lollipop':      'assets/Lollipop.svg'
 };
 
 // ── REAL odds. These decide what the player actually wins. ──
@@ -181,44 +201,28 @@ const PREVIEW_PRIZES = [
 
 // ── REAL odds for Void Spin. Decides what the player actually wins. ──
 const VOID_SPIN_PRIZES = [
-  { id: 'voidCoin1',           type: 'coin',  value: 1,               chance: 65.00, icon: 'coin' },
-  { id: 'voidCoin5',           type: 'coin',  value: 5,               chance: 8.00,  icon: 'coin' },
-  { id: 'voidCoin10',          type: 'coin',  value: 10,              chance: 5.50,  icon: 'coin' },
-  { id: 'voidCoin15',          type: 'coin',  value: 15,              chance: 4.00,  icon: 'coin' },
-  { id: 'voidCoin25',          type: 'coin',  value: 25,              chance: 3.00,  icon: 'coin' },
-  { id: 'voidCoin50',          type: 'coin',  value: 50,              chance: 2.00,  icon: 'coin' },
-  { id: 'voidCoin100',         type: 'coin',  value: 100,             chance: 1.00,  icon: 'coin' },
-  { id: 'voidCoin150',         type: 'coin',  value: 150,             chance: 0.50,  icon: 'coin' },
-  { id: 'voidStars5',          type: 'stars', value: 5,               chance: 5.50,  icon: 'stars' },
-  { id: 'voidStars10',         type: 'stars', value: 10,              chance: 3.00,  icon: 'stars' },
-  { id: 'voidStars25',         type: 'stars', value: 25,              chance: 1.00,  icon: 'stars' },
-  { id: 'voidGiftHeart',       type: 'gift',  value: 'Heart',         chance: 1.00,  lottie: 'assets/giftHeart.json' },
-  { id: 'voidGiftBear',        type: 'gift',  value: 'Bear',          chance: 0.30,  lottie: 'assets/giftBear.json' },
-  { id: 'voidGiftCake',        type: 'gift',  value: 'Cake',          chance: 0.15,  lottie: 'assets/giftCake.json' },
-  { id: 'voidGiftRocket',      type: 'gift',  value: 'Rocket',        chance: 0.04,  lottie: 'assets/giftRocket.json' },
-  { id: 'voidGiftStarNotepad', type: 'gift',  value: 'Star Notepad',  chance: 0.007, lottie: 'assets/giftStarNotepad.json' },
-  { id: 'voidGiftInstantRamen',type: 'gift',  value: 'Instant Ramen', chance: 0.003, lottie: 'assets/giftInstantRamen.json' }
+  { id: 'voidStars5', type: 'stars', value: 5, chance: 50.0001, icon: 'stars' },
+  { id: 'voidStars10', type: 'stars', value: 10, chance: 27.2727, icon: 'stars' },
+  { id: 'voidStars25', type: 'stars', value: 25, chance: 9.0909, icon: 'stars' },
+  { id: 'voidGiftHeart', type: 'gift', value: 'Heart', chance: 9.0909, lottie: 'assets/giftHeart.json' },
+  { id: 'voidGiftBear', type: 'gift', value: 'Bear', chance: 2.7273, lottie: 'assets/giftBear.json' },
+  { id: 'voidGiftCake', type: 'gift', value: 'Cake', chance: 1.3636, lottie: 'assets/giftCake.json' },
+  { id: 'voidGiftRocket', type: 'gift', value: 'Rocket', chance: 0.3636, lottie: 'assets/giftRocket.json' },
+  { id: 'voidGiftStarNotepad', type: 'gift', value: 'Star Notepad', chance: 0.0636, lottie: 'assets/giftStarNotepad.json' },
+  { id: 'voidGiftInstantRamen', type: 'gift', value: 'Instant Ramen', chance: 0.0273, lottie: 'assets/giftInstantRamen.json' }
 ];
 
 // ── DISPLAY-ONLY odds for Void Spin idle wheel + pre-reveal repaint. ──
 const VOID_PREVIEW_PRIZES = [
-  { id: 'voidCoin1',           type: 'coin',  value: 1,               chance: 15.00, icon: 'coin' },
-  { id: 'voidCoin5',           type: 'coin',  value: 5,               chance: 10.00, icon: 'coin' },
-  { id: 'voidCoin10',          type: 'coin',  value: 10,              chance: 9.00,  icon: 'coin' },
-  { id: 'voidCoin15',          type: 'coin',  value: 15,              chance: 8.00,  icon: 'coin' },
-  { id: 'voidCoin25',          type: 'coin',  value: 25,              chance: 7.00,  icon: 'coin' },
-  { id: 'voidCoin50',          type: 'coin',  value: 50,              chance: 6.00,  icon: 'coin' },
-  { id: 'voidCoin100',         type: 'coin',  value: 100,             chance: 5.00,  icon: 'coin' },
-  { id: 'voidCoin150',         type: 'coin',  value: 150,             chance: 4.00,  icon: 'coin' },
-  { id: 'voidStars5',          type: 'stars', value: 5,               chance: 10.00, icon: 'stars' },
-  { id: 'voidStars10',         type: 'stars', value: 10,              chance: 8.00,  icon: 'stars' },
-  { id: 'voidStars25',         type: 'stars', value: 25,              chance: 5.00,  icon: 'stars' },
-  { id: 'voidGiftHeart',       type: 'gift',  value: 'Heart',         chance: 5.00,  lottie: 'assets/giftHeart.json' },
-  { id: 'voidGiftBear',        type: 'gift',  value: 'Bear',          chance: 3.00,  lottie: 'assets/giftBear.json' },
-  { id: 'voidGiftCake',        type: 'gift',  value: 'Cake',          chance: 2.50,  lottie: 'assets/giftCake.json' },
-  { id: 'voidGiftRocket',      type: 'gift',  value: 'Rocket',        chance: 1.50,  lottie: 'assets/giftRocket.json' },
-  { id: 'voidGiftStarNotepad', type: 'gift',  value: 'Star Notepad',  chance: 0.60,  lottie: 'assets/giftStarNotepad.json' },
-  { id: 'voidGiftInstantRamen',type: 'gift',  value: 'Instant Ramen', chance: 0.40,  lottie: 'assets/giftInstantRamen.json' }
+  { id: 'voidStars5', type: 'stars', value: 5, chance: 27.7778, icon: 'stars' },
+  { id: 'voidStars10', type: 'stars', value: 10, chance: 22.2222, icon: 'stars' },
+  { id: 'voidStars25', type: 'stars', value: 25, chance: 13.8889, icon: 'stars' },
+  { id: 'voidGiftHeart', type: 'gift', value: 'Heart', chance: 13.8889, lottie: 'assets/giftHeart.json' },
+  { id: 'voidGiftBear', type: 'gift', value: 'Bear', chance: 8.3333, lottie: 'assets/giftBear.json' },
+  { id: 'voidGiftCake', type: 'gift', value: 'Cake', chance: 6.9444, lottie: 'assets/giftCake.json' },
+  { id: 'voidGiftRocket', type: 'gift', value: 'Rocket', chance: 4.1667, lottie: 'assets/giftRocket.json' },
+  { id: 'voidGiftStarNotepad', type: 'gift', value: 'Star Notepad', chance: 1.6667, lottie: 'assets/giftStarNotepad.json' },
+  { id: 'voidGiftInstantRamen', type: 'gift', value: 'Instant Ramen', chance: 1.1111, lottie: 'assets/giftInstantRamen.json' }
 ];
 
 const VALID_PROMOCODES = {
@@ -247,7 +251,12 @@ const TELEGRAM_GIFT_IDS = {
   // until you swap these for the real ones. ──
   'Rocket':        'PLACEHOLDER_ROCKET_ID',
   'Star Notepad':  'PLACEHOLDER_STARNOTEPAD_ID',
-  'Instant Ramen': 'PLACEHOLDER_INSTANTRAMEN_ID'
+  'Instant Ramen': 'PLACEHOLDER_INSTANTRAMEN_ID',
+
+  // Furry Spin: also placeholders until you have the real Telegram gift ids.
+  'Champagne':     'PLACEHOLDER_CHAMPAGNE_ID',
+  'Socks':         'PLACEHOLDER_SOCKS_ID',
+  'Lollipop':      'PLACEHOLDER_LOLLIPOP_ID'
 };
 
 // ============================================
@@ -303,6 +312,7 @@ const STATE = {
   animationFrameId: null,
   lottieInstances: new Map(),
   lastScaleUpdate: 0,
+  dailyLastSpinAt: 0,   // epoch ms of the last Daily Spin (0 = never)
 
   // ── Void Spin — entirely separate animation/spin state so the two
   // wheels can never stomp on each other mid-spin. ──
@@ -313,6 +323,15 @@ const STATE = {
   voidAnimationFrameId: null,
   voidLottieInstances: new Map(),
   voidLastScaleUpdate: 0,
+
+  // Furry Spin
+  furryIsSpinning: false,
+  furryCurrentWinningPrize: null,
+  furryScrollPosition: 0,
+  furryScrollSpeed: 1,
+  furryAnimationFrameId: null,
+  furryLottieInstances: new Map(),
+  furryLastScaleUpdate: 0,
 
   currentLeaderboardTab: 'coins',
   // Populated from the real /leaderboard endpoint (see Leaderboard.fetchData).
@@ -377,6 +396,8 @@ const TRANSLATIONS = {
     lootHighlight: 'Loot!',
     dailyRewardSub: 'Your free daily gift — open it before midnight.',
     openGift: 'Open Gift',
+    dailyReadyIn: 'Ready in',
+    dailyOnCooldown: 'Daily gift is on cooldown — {time} left',
 
     yourItemsEyebrow: 'your items',
     inventoryHighlight: 'Inventory',
@@ -387,6 +408,16 @@ const TRANSLATIONS = {
     voidSpinTitle: 'VOID',
     voidSpinTitleSuffix: 'Spin',
     voidSpinSub: 'Higher stakes — NFTs, Stars, and rare gifts up for grabs.',
+    furrySpinTitle: 'FURRY',
+    furrySpinSub: 'NFT Socks and Lollipop, Star prizes and rare gifts. Get fluffy.',
+    newSpinEyebrow: 'new spin',
+    eventBadgeAnniversary: '🎉 Anniversary',
+    eventBirthdayTitleSm: 'App',
+    eventBirthdayTitleLg: 'Birthday!',
+    eventBirthdaySub: 'Thank you for an amazing year',
+    eventBadgeLimited: 'Limited',
+    eventStarsTitle: 'Double Stars weekend',
+    eventStarsSub: 'Bonus Stars on every deposit',
     starsWord: 'Stars',
     spinNow: 'Spin Now',
 
@@ -583,6 +614,8 @@ const TRANSLATIONS = {
     lootHighlight: 'добычи!',
     dailyRewardSub: 'Ваш бесплатный ежедневный подарок — заберите до полуночи.',
     openGift: 'Открыть подарок',
+    dailyReadyIn: 'Через',
+    dailyOnCooldown: 'Ежедневный подарок на перезарядке — осталось {time}',
 
     yourItemsEyebrow: 'ваши предметы',
     inventoryHighlight: 'Инвентарь',
@@ -593,6 +626,16 @@ const TRANSLATIONS = {
     voidSpinTitle: 'VOID',
     voidSpinTitleSuffix: 'Spin',
     voidSpinSub: 'Выше ставки — NFT, звёзды и редкие подарки.',
+    furrySpinTitle: 'FURRY',
+    furrySpinSub: 'NFT-носки и леденец, призы в звёздах и редкие подарки. Пушистая удача.',
+    newSpinEyebrow: 'новый спин',
+    eventBadgeAnniversary: '🎉 Годовщина',
+    eventBirthdayTitleSm: 'Прил.',
+    eventBirthdayTitleLg: 'День рождения!',
+    eventBirthdaySub: 'Спасибо за потрясающий год',
+    eventBadgeLimited: 'Ограничено',
+    eventStarsTitle: 'Выходные двойных звёзд',
+    eventStarsSub: 'Бонусные звёзды на каждый депозит',
     starsWord: 'Звёзд',
     spinNow: 'Крутить',
 
@@ -759,6 +802,8 @@ const TRANSLATIONS = {
     lootHighlight: 'botín!',
     dailyRewardSub: 'Tu regalo diario gratuito — ábrelo antes de medianoche.',
     openGift: 'Abrir regalo',
+    dailyReadyIn: 'Listo en',
+    dailyOnCooldown: 'El regalo diario está en espera — faltan {time}',
 
     yourItemsEyebrow: 'tus objetos',
     inventoryHighlight: 'Inventario',
@@ -769,6 +814,16 @@ const TRANSLATIONS = {
     voidSpinTitle: 'VOID',
     voidSpinTitleSuffix: 'Spin',
     voidSpinSub: 'Apuestas más altas — NFTs, Stars y regalos raros en juego.',
+    furrySpinTitle: 'FURRY',
+    furrySpinSub: 'Calcetines y Piruleta NFT, premios en Estrellas y regalos raros. ¡A peludear!',
+    newSpinEyebrow: 'nuevo giro',
+    eventBadgeAnniversary: '🎉 Aniversario',
+    eventBirthdayTitleSm: 'App',
+    eventBirthdayTitleLg: '¡Cumpleaños!',
+    eventBirthdaySub: 'Gracias por un año increíble',
+    eventBadgeLimited: 'Limitado',
+    eventStarsTitle: 'Fin de semana de Estrellas dobles',
+    eventStarsSub: 'Estrellas de bono en cada depósito',
     starsWord: 'Stars',
     spinNow: 'Girar ahora',
 
@@ -935,6 +990,8 @@ const TRANSLATIONS = {
     lootHighlight: 'butin!',
     dailyRewardSub: 'Votre cadeau quotidien gratuit — ouvrez-le avant minuit.',
     openGift: 'Ouvrir le cadeau',
+    dailyReadyIn: 'Prêt dans',
+    dailyOnCooldown: 'Le cadeau quotidien est en recharge — encore {time}',
 
     yourItemsEyebrow: 'vos objets',
     inventoryHighlight: 'Inventaire',
@@ -945,6 +1002,16 @@ const TRANSLATIONS = {
     voidSpinTitle: 'VOID',
     voidSpinTitleSuffix: 'Spin',
     voidSpinSub: 'Enjeux plus élevés — NFT, Stars et cadeaux rares à gagner.',
+    furrySpinTitle: 'FURRY',
+    furrySpinSub: 'Chaussettes et Sucette en NFT, prix en Étoiles et cadeaux rares. Version peluche.',
+    newSpinEyebrow: 'nouveau spin',
+    eventBadgeAnniversary: '🎉 Anniversaire',
+    eventBirthdayTitleSm: 'App',
+    eventBirthdayTitleLg: 'Anniversaire !',
+    eventBirthdaySub: 'Merci pour une année incroyable',
+    eventBadgeLimited: 'Limité',
+    eventStarsTitle: 'Week-end Étoiles doublées',
+    eventStarsSub: 'Étoiles bonus sur chaque dépôt',
     starsWord: 'Stars',
     spinNow: 'Tourner',
 
@@ -1111,6 +1178,8 @@ const TRANSLATIONS = {
     lootHighlight: 'Beute!',
     dailyRewardSub: 'Dein kostenloses tägliches Geschenk — öffne es vor Mitternacht.',
     openGift: 'Geschenk öffnen',
+    dailyReadyIn: 'Bereit in',
+    dailyOnCooldown: 'Tägliches Geschenk lädt noch — noch {time}',
 
     yourItemsEyebrow: 'deine Gegenstände',
     inventoryHighlight: 'Inventar',
@@ -1121,6 +1190,16 @@ const TRANSLATIONS = {
     voidSpinTitle: 'VOID',
     voidSpinTitleSuffix: 'Spin',
     voidSpinSub: 'Höhere Einsätze — NFTs, Stars und seltene Geschenke zu gewinnen.',
+    furrySpinTitle: 'FURRY',
+    furrySpinSub: 'NFT-Socken und Lutscher, Stern-Preise und seltene Geschenke. Flauschig!',
+    newSpinEyebrow: 'neuer Spin',
+    eventBadgeAnniversary: '🎉 Jubiläum',
+    eventBirthdayTitleSm: 'App',
+    eventBirthdayTitleLg: 'Geburtstag!',
+    eventBirthdaySub: 'Danke für ein tolles Jahr',
+    eventBadgeLimited: 'Limitiert',
+    eventStarsTitle: 'Doppelte-Sterne-Wochenende',
+    eventStarsSub: 'Bonus-Sterne bei jeder Einzahlung',
     starsWord: 'Stars',
     spinNow: 'Jetzt drehen',
 
@@ -1287,6 +1366,8 @@ const TRANSLATIONS = {
     lootHighlight: '袋！',
     dailyRewardSub: '您的免费每日礼物 — 请在午夜前领取。',
     openGift: '打开礼物',
+    dailyReadyIn: '还需',
+    dailyOnCooldown: '每日礼物冷却中 — 还剩 {time}',
 
     yourItemsEyebrow: '您的物品',
     inventoryHighlight: '库存',
@@ -1297,6 +1378,16 @@ const TRANSLATIONS = {
     voidSpinTitle: 'VOID',
     voidSpinTitleSuffix: 'Spin',
     voidSpinSub: '更高赌注 — NFT、星星和稀有礼物等你来拿。',
+    furrySpinTitle: 'FURRY',
+    furrySpinSub: 'NFT袜子和棒棒糖、星星奖励和稀有礼物。毛茸茸的好运。',
+    newSpinEyebrow: '新转盘',
+    eventBadgeAnniversary: '🎉 周年纪念',
+    eventBirthdayTitleSm: '应用',
+    eventBirthdayTitleLg: '生日快乐！',
+    eventBirthdaySub: '感谢这美好的一年',
+    eventBadgeLimited: '限时',
+    eventStarsTitle: '双倍星星周末',
+    eventStarsSub: '每次充值赠送奖励星星',
     starsWord: '星星',
     spinNow: '立即旋转',
 
@@ -2304,8 +2395,6 @@ const Navigation = {
     if (pageName === 'leaderboard') Leaderboard.init();
     if (pageName === 'deposit')     Deposit.init();
 
-    const debugEl = document.getElementById('currentPageDebug');
-    if (debugEl) debugEl.textContent = pageName;
   }
 };
 
@@ -2348,7 +2437,7 @@ const Menu = {
   },
 
   closeAll() {
-    ['hamburger','navMenu','overlay','debugPanel'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+    ['hamburger','navMenu','overlay'].forEach(id => document.getElementById(id)?.classList.remove('active'));
     document.body.style.overflow = '';
   }
 };
@@ -3461,6 +3550,63 @@ const SpinWheel = {
     this.populateCubes();
     this.startAnimation();
     this.loadIcons();
+    this.initCooldown();
+  },
+
+  // ── Daily cooldown (24h) ──
+  // Stored as the timestamp of the last spin via BackendAPI (Telegram
+  // CloudStorage + localStorage, same as coins/stars). The cooldown starts
+  // when the spin is accepted, not at claim, so reloading mid-spin can't be
+  // used to re-roll the prize.
+  initCooldown() {
+    this.cooldownReady = BackendAPI._cloudGet('dailySpinLastAt', 0).then(v => {
+      STATE.dailyLastSpinAt = v || 0;
+      this.updateCooldownUI();
+    });
+    setInterval(() => this.updateCooldownUI(), 1000);
+  },
+
+  cooldownRemaining() {
+    if (!STATE.dailyLastSpinAt) return 0;
+    const left = STATE.dailyLastSpinAt + CONFIG.DAILY_COOLDOWN_MS - Date.now();
+    // Clamp: a last-spin time in the future (device clock moved back) can't
+    // lock the gift for longer than one full cooldown.
+    return Math.max(0, Math.min(left, CONFIG.DAILY_COOLDOWN_MS));
+  },
+
+  formatRemaining(ms) {
+    const s   = Math.ceil(ms / 1000);
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+  },
+
+  // Gray state is only applied while idle — during a spin / win modal the
+  // wheel keeps its normal colors, it greys out after the claim.
+  updateCooldownUI() {
+    const left = this.cooldownRemaining();
+    this._cooling = left > 0 && !STATE.isSpinning;
+    document.querySelector('.content-box-left-1')?.classList.toggle('is-cooldown', this._cooling);
+    document.getElementById('page-dailyspin')?.classList.toggle('is-cooldown', this._cooling);
+    document.getElementById('spinButton')?.setAttribute('aria-disabled', String(this._cooling));
+    const t = document.getElementById('dailyCardTimerValue');
+    if (t && left > 0) t.textContent = this.formatRemaining(left);
+  },
+
+  // Returns true (and shows the toast) while the gift is still cooling down.
+  notifyIfCooldown() {
+    const left = this.cooldownRemaining();
+    if (left <= 0) return false;
+    const now = Date.now();
+    if (now - (this._lastCooldownToast || 0) > 2300) {   // toast lives 2.2s — don't stack on rapid taps
+      this._lastCooldownToast = now;
+      Utils.showToast(Utils.t('dailyOnCooldown', { time: this.formatRemaining(left) }), 'error');
+    }
+    return true;
+  },
+
+  startCooldown() {
+    STATE.dailyLastSpinAt = Date.now();
+    BackendAPI._cloudSet('dailySpinLastAt', STATE.dailyLastSpinAt);
   },
 
   // Picks the REAL outcome. Only ever called from spin() to determine
@@ -3535,8 +3681,10 @@ const SpinWheel = {
       const dist  = Math.abs(cRect.left + cRect.width / 2 - wRect.left - center);
       const scale = Math.max(0.6, 1.5 - (dist / center) * 0.9);
       cube.style.transform   = `scale(${scale})`;
-      cube.style.borderColor = scale > 1.3 ? 'rgba(255,178,91,0.85)' : 'rgba(255,178,91,0.3)';
-      cube.style.boxShadow   = scale > 1.3 ? '0 0 30px rgba(255,178,91,0.45)' : 'none';
+      // gray outlines while the daily gift is on cooldown, ember otherwise
+      const rgb = this._cooling ? '170,170,185' : '255,178,91';
+      cube.style.borderColor = scale > 1.3 ? `rgba(${rgb},0.85)` : `rgba(${rgb},0.3)`;
+      cube.style.boxShadow   = scale > 1.3 ? `0 0 30px rgba(${rgb},${this._cooling ? 0.2 : 0.45})` : 'none';
     });
   },
 
@@ -3576,6 +3724,7 @@ const SpinWheel = {
 
   spin() {
     if (STATE.isSpinning) return;
+    if (this.notifyIfCooldown()) return;
     STATE.isSpinning = true;
     const btn = document.getElementById('spinButton');
     if (btn) btn.disabled = true;
@@ -3584,6 +3733,9 @@ const SpinWheel = {
     const winning = this.selectPrize();
     const cubes   = Array.from(document.querySelectorAll('#wheel .cube'));
     if (!cubes.length) { STATE.isSpinning = false; if (btn) btn.disabled = false; return; }
+
+    this.startCooldown();
+    this.updateCooldownUI();
 
     // Repaint every cube for the spin visual — uses REAL odds so the
     // reel you watch scroll actually reflects what you can win. Only
@@ -3729,6 +3881,7 @@ const SpinWheel = {
     this.populateCubes();
     STATE.scrollSpeed = 1;
     STATE.isSpinning  = false;
+    this.updateCooldownUI();
     if (claimBtn) claimBtn.disabled = false;
     const spinBtn = document.getElementById('spinButton');
     if (spinBtn) spinBtn.disabled = false;
@@ -4079,14 +4232,6 @@ const VoidSpinWheel = {
   },
 
   loadIcons() {
-    ['voidCoin1','voidCoin5','voidCoin10','voidCoin15','voidCoin25','voidCoin50','voidCoin100','voidCoin150'].forEach(id => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const img = Object.assign(document.createElement('img'), { src: 'assets/Coin.svg', alt: 'Coin' });
-      img.style.cssText = 'width:100%;height:100%;object-fit:contain';
-      el.appendChild(img);
-    });
-
     ['voidStars5','voidStars10','voidStars25'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -4099,6 +4244,440 @@ const VoidSpinWheel = {
       ['voidGiftHeart','Heart'], ['voidGiftBear','Bear'],
       ['voidGiftCake','Cake'],   ['voidGiftRocket','Rocket'],
       ['voidGiftNotepad','Star Notepad'], ['voidGiftRamen','Instant Ramen']
+    ].forEach(([id, giftName]) => {
+      const el = document.getElementById(id);
+      if (el) {
+        const img = Object.assign(document.createElement('img'), {
+          src: GIFT_SVG_ICONS[giftName] ?? '',
+          alt: giftName
+        });
+        img.style.cssText = 'width:100%;height:100%;object-fit:contain';
+        el.appendChild(img);
+      }
+    });
+  }
+};
+
+
+// ============================================
+// EVENTS CAROUSEL
+// Swipeable announcement banners above the live-gifts strip. Native
+// scroll-snap drives the swipe; this just keeps the dots in sync and lets
+// a dot click scroll to that card. Add more cards straight in the HTML
+// (.event-card inside #eventsTrack) — nothing here assumes a fixed count.
+// ============================================
+const EventsCarousel = {
+  track: null,
+  dotsEl: null,
+  cards: [],
+  activeIndex: 0,
+  scrollRaf: null,
+
+  init() {
+    this.track = document.getElementById('eventsTrack');
+    this.dotsEl = document.getElementById('eventsDots');
+    if (!this.track || !this.dotsEl) return;
+
+    this.cards = Array.from(this.track.querySelectorAll('.event-card'));
+    if (this.cards.length < 2) { this.dotsEl.style.display = 'none'; } // one card needs no dots
+    this.renderDots();
+
+    this.track.addEventListener('scroll', () => {
+      if (this.scrollRaf) return;
+      this.scrollRaf = requestAnimationFrame(() => {
+        this.scrollRaf = null;
+        this.syncActiveFromScroll();
+      });
+    }, { passive: true });
+
+    window.addEventListener('resize', () => this.goTo(this.activeIndex, false));
+  },
+
+  renderDots() {
+    this.dotsEl.innerHTML = '';
+    this.cards.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.setAttribute('aria-label', `Go to announcement ${i + 1}`);
+      if (i === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => this.goTo(i, true));
+      this.dotsEl.appendChild(dot);
+    });
+  },
+
+  goTo(index, smooth) {
+    const card = this.cards[index];
+    if (!card || !this.track) return;
+    this.track.scrollTo({ left: card.offsetLeft, behavior: smooth ? 'smooth' : 'auto' });
+    this.setActive(index);
+  },
+
+  syncActiveFromScroll() {
+    if (!this.track || !this.cards.length) return;
+    const center = this.track.scrollLeft + this.track.clientWidth / 2;
+    let closest = 0, best = Infinity;
+    this.cards.forEach((card, i) => {
+      const d = Math.abs(card.offsetLeft + card.offsetWidth / 2 - center);
+      if (d < best) { best = d; closest = i; }
+    });
+    this.setActive(closest);
+  },
+
+  setActive(index) {
+    if (index === this.activeIndex && this.dotsEl.children[index]?.classList.contains('active')) return;
+    this.activeIndex = index;
+    Array.from(this.dotsEl.children).forEach((dot, i) => dot.classList.toggle('active', i === index));
+  }
+};
+
+// ============================================
+// FURRY SPIN: third wheel, home-page banner.
+// Same engine as Void Spin (own ids, own knobs). Prizes are Stars and gifts
+// only: NO coin prizes. Socks and Lollipop are NFTs.
+// `lottie` on a gift only marks it as a gift; there is no animation file for
+// Champagne / Socks / Lollipop and none is loaded (icons come from
+// GIFT_SVG_ICONS). Both tables must total exactly 100: selectPrize() rolls
+// 0-100 and falls back to the FIRST entry if the total is short.
+// ============================================
+// REAL odds. Decides what the player actually wins.
+const FURRY_SPIN_PRIZES = [
+  { id: 'furryStars10', type: 'stars', value: 10, chance: 40.0000, icon: 'stars' },
+  { id: 'furryStars25', type: 'stars', value: 25, chance: 30.0000, icon: 'stars' },
+  { id: 'furryStars50', type: 'stars', value: 50, chance: 12.0000, icon: 'stars' },
+  { id: 'furryStars100', type: 'stars', value: 100, chance: 2.6000, icon: 'stars' },
+  { id: 'furryGiftRose', type: 'gift', value: 'Rose', chance: 6.0000, lottie: 'assets/giftRose.json' },
+  { id: 'furryGiftCake', type: 'gift', value: 'Cake', chance: 4.5000, lottie: 'assets/giftCake.json' },
+  { id: 'furryGiftChampagne', type: 'gift', value: 'Champagne', chance: 3.0000, lottie: 'assets/giftChampagne.json' },
+  { id: 'furryGiftTrophy', type: 'gift', value: 'Trophy', chance: 0.8000, lottie: 'assets/giftTrophy.json' },
+  { id: 'furryGiftDiamond', type: 'gift', value: 'Diamond', chance: 0.8000, lottie: 'assets/giftDiamond.json' },
+  { id: 'furryGiftSocks', type: 'gift', value: 'Socks', chance: 0.1500, lottie: 'assets/giftSocks.json' },
+  { id: 'furryGiftLollipop', type: 'gift', value: 'Lollipop', chance: 0.1500, lottie: 'assets/giftLollipop.json' }
+];
+
+// DISPLAY-ONLY odds for the idle reel and pre-reveal repaint.
+const FURRY_PREVIEW_PRIZES = [
+  { id: 'furryStars10', type: 'stars', value: 10, chance: 12.0000, icon: 'stars' },
+  { id: 'furryStars25', type: 'stars', value: 25, chance: 12.0000, icon: 'stars' },
+  { id: 'furryStars50', type: 'stars', value: 50, chance: 10.0000, icon: 'stars' },
+  { id: 'furryStars100', type: 'stars', value: 100, chance: 6.0000, icon: 'stars' },
+  { id: 'furryGiftRose', type: 'gift', value: 'Rose', chance: 10.0000, lottie: 'assets/giftRose.json' },
+  { id: 'furryGiftCake', type: 'gift', value: 'Cake', chance: 9.0000, lottie: 'assets/giftCake.json' },
+  { id: 'furryGiftChampagne', type: 'gift', value: 'Champagne', chance: 9.0000, lottie: 'assets/giftChampagne.json' },
+  { id: 'furryGiftTrophy', type: 'gift', value: 'Trophy', chance: 7.0000, lottie: 'assets/giftTrophy.json' },
+  { id: 'furryGiftDiamond', type: 'gift', value: 'Diamond', chance: 7.0000, lottie: 'assets/giftDiamond.json' },
+  { id: 'furryGiftSocks', type: 'gift', value: 'Socks', chance: 9.0000, lottie: 'assets/giftSocks.json' },
+  { id: 'furryGiftLollipop', type: 'gift', value: 'Lollipop', chance: 9.0000, lottie: 'assets/giftLollipop.json' }
+];
+
+// Furry Spin engine: a straight copy of VoidSpinWheel (same logic), own ids/state/odds.
+const FurrySpinWheel = {
+  init() {
+    this.populateCubes();
+    this.startAnimation();
+    this.loadIcons();
+  },
+
+  selectPrize() {
+    const r = Math.random() * 100;
+    let cum = 0;
+    for (const p of FURRY_SPIN_PRIZES) { cum += p.chance; if (r <= cum) return p; }
+    return FURRY_SPIN_PRIZES[0];
+  },
+
+  selectPreviewPrize() {
+    const r = Math.random() * 100;
+    let cum = 0;
+    for (const p of FURRY_PREVIEW_PRIZES) { cum += p.chance; if (r <= cum) return p; }
+    return FURRY_PREVIEW_PRIZES[0];
+  },
+
+  populateCubes() {
+    document.querySelectorAll('.furry-cube').forEach(c => this.renderCube(c, this.selectPreviewPrize()));
+  },
+
+  renderCube(cube, prize) {
+    this._cleanupLottie(cube);
+    cube.dataset.prizeId    = prize.id;
+    cube.dataset.prizeType  = prize.type;
+    cube.dataset.prizeValue = prize.value;
+    if (!cube.dataset.cubeId) cube.dataset.cubeId = `furrycube_${Math.random().toString(36).slice(2,11)}`;
+    cube.innerHTML = '';
+    cube.style.cssText = 'position:relative;display:flex;align-items:center;justify-content:center;';
+
+    if (prize.type === 'coin' || prize.type === 'stars') {
+      const img = Object.assign(document.createElement('img'), {
+        src: prize.type === 'coin' ? 'assets/Coin.svg' : 'assets/TStars.svg',
+        alt: prize.type === 'coin' ? 'Coin' : 'Stars'
+      });
+      img.style.cssText = 'width:70px;height:70px;object-fit:contain;margin:auto';
+      const txt = document.createElement('div');
+      txt.textContent = prize.value;
+      txt.style.cssText = 'position:absolute;top:15%;left:25%;transform:translate(-50%,-50%);font-size:1.5rem;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.8);pointer-events:none';
+      cube.append(img, txt);
+    } else {
+      // Gift — flat SVG, no lottie (see file-header note above).
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'width:80px;height:80px;margin:auto';
+      const img = Object.assign(document.createElement('img'), {
+        src: GIFT_SVG_ICONS[prize.value] ?? '',
+        alt: prize.value
+      });
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain';
+      wrap.appendChild(img);
+      cube.appendChild(wrap);
+    }
+  },
+
+  // No-op today (gift cubes don't load lottie instances here), kept so
+  // the recycle/spin code paths mirror SpinWheel exactly and stay a
+  // drop-in copy if Lottie assets get added for these gifts later.
+  _cleanupLottie(cube) {
+    const id = cube.dataset.cubeId;
+    if (id && STATE.furryLottieInstances.has(id)) {
+      STATE.furryLottieInstances.get(id).destroy();
+      STATE.furryLottieInstances.delete(id);
+    }
+  },
+
+  updateScales(cubes) {
+    const now = Date.now();
+    if (now - STATE.furryLastScaleUpdate < 16 && STATE.furryIsSpinning) return;
+    STATE.furryLastScaleUpdate = now;
+    const wc = document.querySelector('.furry-wheel-container');
+    if (!wc) return;
+    const center = wc.offsetWidth / 2;
+    const wRect  = wc.getBoundingClientRect();
+    cubes.forEach(cube => {
+      const cRect = cube.getBoundingClientRect();
+      const dist  = Math.abs(cRect.left + cRect.width / 2 - wRect.left - center);
+      const scale = Math.max(0.6, 1.5 - (dist / center) * 0.9);
+      cube.style.transform   = `scale(${scale})`;
+      cube.style.zIndex      = scale > 1.3 ? '5' : '1';
+      cube.style.borderColor = scale > 1.3 ? 'rgba(201,242,90,0.85)' : 'rgba(201,242,90,0.3)';
+      cube.style.boxShadow   = scale > 1.3 ? '0 0 30px rgba(201,242,90,0.45)' : 'none';
+    });
+  },
+
+  startAnimation() {
+    let lastTime = performance.now();
+    const animate = (now) => {
+      const dt = Math.min(now - lastTime, 100);
+      lastTime = now;
+
+      const wheel = document.getElementById('furryWheel');
+      if (wheel) {
+        STATE.furryScrollPosition += STATE.furryScrollSpeed * (dt / (1000 / 60));
+        const stride = CONFIG.FURRY_CUBE_WIDTH + CONFIG.FURRY_GAP_WIDTH;
+
+        while (STATE.furryScrollPosition >= stride) {
+          const first = document.querySelector('.furry-cube');
+          if (!first) break;
+          wheel.appendChild(first);
+          STATE.furryScrollPosition -= stride;
+          if (!STATE.furryIsSpinning) this.renderCube(first, this.selectPreviewPrize());
+        }
+
+        wheel.style.transform = `translateX(-${STATE.furryScrollPosition}px)`;
+        this.updateScales(Array.from(document.querySelectorAll('.furry-cube')));
+      }
+      STATE.furryAnimationFrameId = requestAnimationFrame(animate);
+    };
+    STATE.furryAnimationFrameId = requestAnimationFrame(animate);
+  },
+
+  spin() {
+    if (STATE.furryIsSpinning) return;
+
+    const btn = document.getElementById('furrySpinButton');
+
+    // Cost check — happens before anything else moves. Deduct-on-press,
+    // not on claim, per spec.
+    if (STATE.userStars < CONFIG.FURRY_SPIN_COST) {
+      Utils.showToast(Utils.t('notEnoughStars', { n: CONFIG.FURRY_SPIN_COST }), 'error');
+      if (btn) {
+        btn.classList.remove('shake-error');
+        void btn.offsetWidth; // restart the animation if it's already mid-shake
+        btn.classList.add('shake-error');
+        setTimeout(() => btn.classList.remove('shake-error'), 400);
+      }
+      return;
+    }
+
+    STATE.furryIsSpinning = true;
+    if (btn) btn.disabled = true;
+    Currency.addStars(-CONFIG.FURRY_SPIN_COST);
+
+    const winning = this.selectPrize();
+    const cubes   = Array.from(document.querySelectorAll('.furry-cube'));
+    if (!cubes.length) { STATE.furryIsSpinning = false; if (btn) btn.disabled = false; return; }
+
+    cubes.forEach(c => { this._cleanupLottie(c); this.renderCube(c, this.selectPrize()); });
+
+    const stride  = CONFIG.FURRY_CUBE_WIDTH + CONFIG.FURRY_GAP_WIDTH;
+    const minDist = 5000 + Math.random() * 600;
+    const winIdx  = Math.floor(minDist / stride) % cubes.length;
+    this.renderCube(cubes[winIdx], winning);
+
+    const startTime = Date.now();
+    const tick = () => {
+      if (!STATE.furryIsSpinning) return;
+      const progress = Math.min((Date.now() - startTime) / CONFIG.FURRY_SPIN_DURATION, 1);
+      STATE.furryScrollSpeed = CONFIG.FURRY_SPIN_MAX_SPEED * (1 - (1 - Math.pow(1 - progress, 4)));
+      if (progress < 1) { requestAnimationFrame(tick); }
+      else { STATE.furryScrollSpeed = 0; setTimeout(() => this.snapToCenter(), 100); }
+    };
+    tick();
+  },
+
+  snapToCenter() {
+    const cubes = Array.from(document.querySelectorAll('.furry-cube'));
+    const wc    = document.querySelector('.furry-wheel-container');
+    if (!wc) return;
+    const center = wc.offsetWidth / 2;
+    const wRect  = wc.getBoundingClientRect();
+    let bestCube = null, bestDist = Infinity, snapDelta = 0;
+
+    cubes.forEach(c => {
+      const r    = c.getBoundingClientRect();
+      const dist = Math.abs(r.left + r.width / 2 - wRect.left - center);
+      if (dist < bestDist) { bestDist = dist; bestCube = c; snapDelta = (r.left + r.width / 2 - wRect.left) - center; }
+    });
+
+    const startPos = STATE.furryScrollPosition;
+    const startT   = Date.now();
+    const snap = () => {
+      const p = Math.min((Date.now() - startT) / 400, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      STATE.furryScrollPosition = startPos + snapDelta * e;
+      if (p < 1) { requestAnimationFrame(snap); return; }
+      if (bestCube) {
+        bestCube.style.transition = 'all .3s ease';
+        bestCube.style.borderColor = '#c9f25a';
+        bestCube.style.boxShadow   = '0 0 40px rgba(201,242,90,.75)';
+        setTimeout(() => { if (bestCube) bestCube.style.transition = ''; }, 300);
+        const final = FURRY_SPIN_PRIZES.find(p => p.id === bestCube.dataset.prizeId);
+        if (final) setTimeout(() => this.showWin(final), 200);
+      }
+    };
+    snap();
+  },
+
+  showWin(prize) {
+    STATE.furryCurrentWinningPrize = prize;
+    const modal    = document.getElementById('furryWinModal');
+    const iconEl   = document.getElementById('furryModalPrizeIcon');
+    const nameEl   = document.getElementById('furryModalPrizeName');
+    const valueRow = document.getElementById('furryModalValueRow');
+    if (!modal || !iconEl || !nameEl) return;
+
+    iconEl.innerHTML = '';
+
+    if (prize.type === 'coin') {
+      const img = Object.assign(document.createElement('img'), { src: 'assets/Coin.svg', alt: 'Coins' });
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;animation:prizeFloat 2.5s ease-in-out infinite;filter:drop-shadow(0 12px 32px rgba(201,242,90,.4))';
+      iconEl.appendChild(img);
+      nameEl.innerHTML = `<span class="hl">${prize.value}</span> ${Utils.t('coinsWord')}`;
+      if (valueRow) {
+        valueRow.innerHTML = `<img src="assets/Coin.svg" alt="Coins" style="width:22px;height:22px"><span>${prize.value} ${Utils.t('coinsWord')}</span>`;
+        valueRow.style.display = 'flex';
+      }
+    } else if (prize.type === 'stars') {
+      const img = Object.assign(document.createElement('img'), { src: 'assets/TStars.svg', alt: 'Stars' });
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;animation:prizeFloat 2.5s ease-in-out infinite;filter:drop-shadow(0 12px 32px rgba(201,242,90,.4))';
+      iconEl.appendChild(img);
+      nameEl.innerHTML = `<span class="hl">${prize.value}</span> ${Utils.t('starsWord')}`;
+      if (valueRow) {
+        valueRow.innerHTML = `<img src="assets/TStars.svg" alt="Stars" style="width:22px;height:22px"><span>${prize.value} ${Utils.t('starsAddedToBalance')}</span>`;
+        valueRow.style.display = 'flex';
+      }
+    } else {
+      const img = document.createElement('img');
+      img.src = GIFT_SVG_ICONS[prize.value] ?? '';
+      img.alt = prize.value;
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;animation:prizeFloat 2.5s ease-in-out infinite;filter:drop-shadow(0 12px 32px rgba(201,242,90,.4))';
+      iconEl.appendChild(img);
+      nameEl.innerHTML = `the <span class="hl">${prize.value}</span>`;
+      if (valueRow) {
+        const val = PRIZE_COIN_VALUES[prize.value] ?? 50;
+        valueRow.innerHTML = `<img src="assets/Coin.svg" alt="Coins" style="width:22px;height:22px"><span>${val.toLocaleString()} ${Utils.t('coinsValue')}</span>`;
+        valueRow.style.display = 'flex';
+      }
+    }
+
+    modal.classList.add('show');
+  },
+
+  hideWin() {
+    const modal = document.getElementById('furryWinModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    setTimeout(() => {
+      const el = document.getElementById('furryModalPrizeIcon');
+      if (el) el.innerHTML = '';
+    }, 300);
+  },
+
+  async claimWin() {
+    if (!STATE.furryCurrentWinningPrize) return;
+    const prize = STATE.furryCurrentWinningPrize;
+    STATE.furryCurrentWinningPrize = null;
+
+    const claimBtn = document.getElementById('furryClaimButton');
+    if (claimBtn) claimBtn.disabled = true;
+
+    if (prize.type === 'coin') {
+      Currency.add(parseInt(prize.value, 10));
+    } else if (prize.type === 'stars') {
+      Currency.addStars(parseInt(prize.value, 10));
+    } else {
+      const added = Inventory.add(prize);
+      const telegramGiftId = TELEGRAM_GIFT_IDS[prize.value];
+      if (telegramGiftId) {
+        const STORE_URL = 'https://vgdatastorage-production.up.railway.app';
+        const userId    = STATE.tg?.initDataUnsafe?.user?.id ?? 'unknown';
+        const username  = STATE.tg?.initDataUnsafe?.user?.username ?? null;
+        try {
+          await fetch(`${STORE_URL}/prizes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prize_id: added.prizeId,
+              gift_name: prize.value,
+              telegram_gift_id: telegramGiftId,
+              user_id: userId,
+              username
+            })
+          });
+        } catch { /* non-fatal */ }
+      }
+      LiveGiftNotifications.add(added);
+    }
+
+    this.hideWin();
+
+    document.querySelectorAll('.furry-cube').forEach(c => this._cleanupLottie(c));
+    this.populateCubes();
+    STATE.furryScrollSpeed = 1;
+    STATE.furryIsSpinning  = false;
+    if (claimBtn) claimBtn.disabled = false;
+    const spinBtn = document.getElementById('furrySpinButton');
+    if (spinBtn) spinBtn.disabled = false;
+  },
+
+  loadIcons() {
+    [['furryStars10',10],['furryStars25',25],['furryStars50',50],['furryStars100',100]].forEach(([id]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const img = Object.assign(document.createElement('img'), { src: 'assets/TStars.svg', alt: 'Stars' });
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain';
+      el.appendChild(img);
+    });
+
+    [
+      ['furryGiftSocks','Socks'],       ['furryGiftLollipop','Lollipop'],
+      ['furryGiftChampagne','Champagne'], ['furryGiftTrophy','Trophy'],
+      ['furryGiftDiamond','Diamond'],   ['furryGiftCake','Cake'],
+      ['furryGiftRose','Rose']
     ].forEach(([id, giftName]) => {
       const el = document.getElementById(id);
       if (el) {
@@ -4414,6 +4993,13 @@ const ContentBoxes = {
       Navigation.navigateTo('voidspin');
     });
 
+    // Furry Spin: same wiring as Void
+    document.querySelector('.content-box-furry')?.addEventListener('click', () => Navigation.navigateTo('furryspin'));
+    document.querySelector('.furry-spin-cta')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Navigation.navigateTo('furryspin');
+    });
+
     document.querySelector('.content-box-right .card-btn')?.addEventListener('click', (e) => {
       e.stopPropagation();
       FullInventoryModal.open();
@@ -4478,7 +5064,11 @@ const EventListeners = {
     document.getElementById('convertBtn')?.addEventListener('click', () => PrizeModal.convert());
     document.getElementById('claimPrizeBtn')?.addEventListener('click', () => PrizeModal.claim());
 
-    document.getElementById('spinButton')?.addEventListener('click', () => Subscription.gate(() => SpinWheel.spin()));
+    document.getElementById('spinButton')?.addEventListener('click', async () => {
+      await SpinWheel.cooldownReady;              // saved cooldown must be loaded before we decide
+      if (SpinWheel.notifyIfCooldown()) return;   // before the subscription gate: no channel popup for a spin that can't happen
+      Subscription.gate(() => SpinWheel.spin());
+    });
     document.getElementById('claimButton')?.addEventListener('click', () => SpinWheel.claimWin());
     document.getElementById('winModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) SpinWheel.hideWin(); });
 
@@ -4486,6 +5076,10 @@ const EventListeners = {
     document.getElementById('voidSpinButton')?.addEventListener('click', () => Subscription.gate(() => VoidSpinWheel.spin()));
     document.getElementById('voidClaimButton')?.addEventListener('click', () => VoidSpinWheel.claimWin());
     document.getElementById('voidWinModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) VoidSpinWheel.hideWin(); });
+
+    document.getElementById('furrySpinButton')?.addEventListener('click', () => Subscription.gate(() => FurrySpinWheel.spin()));
+    document.getElementById('furryClaimButton')?.addEventListener('click', () => FurrySpinWheel.claimWin());
+    document.getElementById('furryWinModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) FurrySpinWheel.hideWin(); });
 
     document.getElementById('fullInventoryClose')?.addEventListener('click', () => FullInventoryModal.close());
     document.getElementById('fullInventoryModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) FullInventoryModal.close(); });
@@ -4499,15 +5093,8 @@ const EventListeners = {
       });
     });
 
-    document.getElementById('imitateWinBtn')?.addEventListener('click', () => {
-      Notifications.add();
-      Currency.add(Math.floor(Math.random() * 151) + 50);
-    });
-    document.getElementById('clearAllBtn')?.addEventListener('click', () => Notifications.clearAll());
-
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { PrizeModal.close(); FullInventoryModal.close(); LanguageModal.close(); Menu.closeAll(); SpinWheel.hideWin(); VoidSpinWheel.hideWin(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); document.getElementById('debugPanel')?.classList.toggle('active'); }
+      if (e.key === 'Escape') { PrizeModal.close(); FullInventoryModal.close(); LanguageModal.close(); Menu.closeAll(); SpinWheel.hideWin(); VoidSpinWheel.hideWin(); FurrySpinWheel.hideWin(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); FullInventoryModal.open(); }
     });
 
@@ -4589,6 +5176,8 @@ function startWheels() {
   const run = () => {
     SpinWheel.init();
     VoidSpinWheel.init();
+    FurrySpinWheel.init();
+    EventsCarousel.init();
     LottieAnimations.init();
   };
   if (document.readyState === 'complete') {
@@ -4602,7 +5191,7 @@ function startWheels() {
 window.TelegramGame = {
   state: STATE, config: CONFIG,
   Currency, Inventory, Navigation, Settings,
-  SpinWheel, VoidSpinWheel, Leaderboard, Notifications,
+  SpinWheel, VoidSpinWheel, FurrySpinWheel, EventsCarousel, Leaderboard, Notifications,
   PrizeModal, FullInventoryModal, Deposit, BottomNav
 };
 
