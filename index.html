@@ -87,24 +87,47 @@
       </ul>
     </nav>
 
-    <!-- Debug Panel -->
-    <div class="debug-panel" id="debugPanel">
-      <h2>Debug Panel</h2>
-      <button class="debug-btn" id="imitateWinBtn">Imitate Win</button>
-      <button class="debug-btn" id="clearAllBtn">Clear All Notifications</button>
-      <div class="debug-info">
-        <p><strong>Active Notifications:</strong> <span id="notificationCount">0</span></p>
-        <p><strong>Max Capacity:</strong> 15</p>
-        <p><strong>Current Page:</strong> <span id="currentPageDebug">home</span></p>
-      </div>
-    </div>
-
     <div class="overlay" id="overlay"></div>
 
     <div class="container">
 
       <!-- ============ HOME ============ -->
       <div class="page-content active" id="page-home">
+
+        <div class="events-carousel">
+          <div class="events-track" id="eventsTrack">
+
+            <div class="event-card event-card--birthday" data-event-id="app-birthday">
+              <span class="event-confetti" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </span>
+              <span class="event-sheen" aria-hidden="true"></span>
+              <div class="event-art event-art--left"><img src="assets/BirthdayCake.svg" alt=""></div>
+              <div class="event-copy event-copy--center">
+                <span class="event-badge" data-i18n="eventBadgeAnniversary">🎉 Anniversary</span>
+                <div class="event-title event-title--hero">
+                  <span class="event-title-sm" data-i18n="eventBirthdayTitleSm">App</span>
+                  <span class="event-title-lg" data-i18n="eventBirthdayTitleLg">Birthday!</span>
+                </div>
+                <div class="event-sub" data-i18n="eventBirthdaySub">Thank you for an amazing year</div>
+              </div>
+              <div class="event-art event-art--right"><img src="assets/Balloons.svg" alt=""></div>
+            </div>
+
+            <a class="event-card event-card--teal" href="#" data-event-id="double-stars" onclick="TelegramGame.Navigation.navigateTo('deposit');return false;">
+              <div class="event-clouds" aria-hidden="true"><img src="assets/Clouds.svg" alt=""></div>
+              <span class="event-sheen" aria-hidden="true"></span>
+              <div class="event-art"><img src="assets/TStars.svg" alt=""></div>
+              <div class="event-copy">
+                <span class="event-badge" data-i18n="eventBadgeLimited">Limited</span>
+                <div class="event-title event-title--big" data-i18n="eventStarsTitle">Double Stars weekend</div>
+                <div class="event-sub" data-i18n="eventStarsSub">Bonus Stars on every deposit</div>
+              </div>
+            </a>
+
+          </div>
+          <div class="events-dots" id="eventsDots" role="tablist" aria-label="Announcements"></div>
+        </div>
 
         <div class="live-gifts-row">
           <span class="live-gifts-label" data-i18n="liveGifts">Live gifts</span>
@@ -126,6 +149,7 @@
               <p class="hero-sub" data-i18n="dailyRewardSub">Your free daily gift — open it before midnight.</p>
             </div>
             <button class="hero-cta" data-i18n="openGift">Open Gift</button>
+            <span class="hero-timer"><span data-i18n="dailyReadyIn">Ready in</span> <span id="dailyCardTimerValue">--:--:--</span></span>
           </div>
 
           <!-- Void Spin -->
@@ -142,6 +166,23 @@
             </div>
             <div class="void-asset-badge hero-asset">
               <img src="assets/Rocket.svg" alt="">
+            </div>
+          </div>
+
+          <!-- Furry Spin -->
+          <div class="hero hero--furry content-box-furry">
+            <div class="hero-glow" aria-hidden="true"></div>
+            <div class="hero-copy">
+              <span class="eyebrow" data-i18n="newSpinEyebrow">new spin</span>
+              <div class="hero-title"><span class="hl" data-i18n="furrySpinTitle">FURRY</span> <span data-i18n="voidSpinTitleSuffix">Spin</span></div>
+              <p class="hero-sub" data-i18n="furrySpinSub">NFT Socks and Lollipop, Star prizes and rare gifts. Get fluffy.</p>
+              <div class="hero-actions">
+                <button class="hero-cta furry-spin-cta" data-i18n="spinNow">Spin Now</button>
+                <div class="spin-cost-badge"><img src="assets/TStars.svg" alt="">50 <span data-i18n="starsWord">Stars</span></div>
+              </div>
+            </div>
+            <div class="furry-asset-badge hero-asset">
+              <img src="assets/Paw.svg" alt="">
             </div>
           </div>
 
@@ -532,17 +573,58 @@
               <div class="reward-item"><div class="reward-amount">10</div><div class="reward-icon" id="voidStars10"></div></div>
               <div class="reward-item"><div class="reward-amount">5</div><div class="reward-icon" id="voidStars5"></div></div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="rewards-divider"><span data-i18n="coinPrizes">Coin Prizes</span></div>
+      <div class="page-content" id="page-furryspin">
+        <div class="daily-spin-container">
+          <button class="spin-back-btn" onclick="TelegramGame.Navigation.navigateTo('home')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <span data-i18n="backToHome">Home</span>
+          </button>
+          <div class="spin-section">
+            <div class="wheel-container furry-wheel-container">
+              <div class="wheel-pointer"></div>
+              <div class="wheel" id="furryWheel">
+                <div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div>
+                <div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div>
+                <div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div>
+                <div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div><div class="cube furry-cube"></div>
+              </div>
+            </div>
+            <button class="spin-button furry-spin-button" id="furrySpinButton">
+              <img src="assets/TStars.svg" alt="Stars" class="spin-btn-star-icon">
+              <span class="spin-btn-cost">50</span>
+              <span class="spin-btn-divider"></span>
+              <span data-i18n="spinButton">SPIN!</span>
+            </button>
+          </div>
+
+          <div class="rewards-section">
+            <div class="rewards-header">
+              <div class="rewards-header-icon"><div class="rewards-icon-mask"></div></div>
+              <h2 class="rewards-title"><span data-i18n="whatCanIGet">What can I</span> <span class="get-text" data-i18n="getWord">get?</span></h2>
+            </div>
+
+            <div class="gift-grid">
+              <div class="gift-item gift-legendary"><div class="gift-icon" id="furryGiftSocks"></div><div class="gift-label">Socks</div><i class="pips" aria-hidden="true"></i></div>
+              <div class="gift-item gift-legendary"><div class="gift-icon" id="furryGiftLollipop"></div><div class="gift-label">Lollipop</div><i class="pips" aria-hidden="true"></i></div>
+              <div class="gift-item gift-rare"><div class="gift-icon" id="furryGiftChampagne"></div><div class="gift-label">Champagne</div><i class="pips" aria-hidden="true"></i></div>
+              <div class="gift-item gift-epic"><div class="gift-icon" id="furryGiftTrophy"></div><div class="gift-label">Trophy</div><i class="pips" aria-hidden="true"></i></div>
+              <div class="gift-item gift-epic"><div class="gift-icon" id="furryGiftDiamond"></div><div class="gift-label">Diamond</div><i class="pips" aria-hidden="true"></i></div>
+              <div class="gift-item gift-uncommon"><div class="gift-icon" id="furryGiftCake"></div><div class="gift-label">Cake</div><i class="pips" aria-hidden="true"></i></div>
+              <div class="gift-item gift-common"><div class="gift-icon" id="furryGiftRose"></div><div class="gift-label">Rose</div></div>
+            </div>
+
+            <div class="rewards-divider"><span data-i18n="starPrizes">Star Prizes</span></div>
             <div class="reward-grid">
-              <div class="reward-item"><div class="reward-amount">150</div><div class="reward-icon" id="voidCoin150"></div></div>
-              <div class="reward-item"><div class="reward-amount">100</div><div class="reward-icon" id="voidCoin100"></div></div>
-              <div class="reward-item"><div class="reward-amount">50</div><div class="reward-icon" id="voidCoin50"></div></div>
-              <div class="reward-item"><div class="reward-amount">25</div><div class="reward-icon" id="voidCoin25"></div></div>
-              <div class="reward-item"><div class="reward-amount">15</div><div class="reward-icon" id="voidCoin15"></div></div>
-              <div class="reward-item"><div class="reward-amount">10</div><div class="reward-icon" id="voidCoin10"></div></div>
-              <div class="reward-item"><div class="reward-amount">5</div><div class="reward-icon" id="voidCoin5"></div></div>
-              <div class="reward-item"><div class="reward-amount">1</div><div class="reward-icon" id="voidCoin1"></div></div>
+              <div class="reward-item"><div class="reward-amount">100</div><div class="reward-icon" id="furryStars100"></div></div>
+              <div class="reward-item"><div class="reward-amount">50</div><div class="reward-icon" id="furryStars50"></div></div>
+              <div class="reward-item"><div class="reward-amount">25</div><div class="reward-icon" id="furryStars25"></div></div>
+              <div class="reward-item"><div class="reward-amount">10</div><div class="reward-icon" id="furryStars10"></div></div>
             </div>
           </div>
         </div>
@@ -571,6 +653,18 @@
         <div class="win-modal-value-row" id="voidModalValueRow"></div>
         <div class="win-modal-divider"></div>
         <button class="claim-button" id="voidClaimButton" data-i18n="claim">Claim!</button>
+      </div>
+    </div>
+
+    <!-- Win Modal (Furry) -->
+    <div class="win-modal-overlay" id="furryWinModal">
+      <div class="win-modal" role="dialog" aria-modal="true">
+        <span class="win-modal-eyebrow" data-i18n="youWon">you won</span>
+        <div class="win-modal-prize-wrap"><div class="win-modal-icon" id="furryModalPrizeIcon"></div></div>
+        <div class="win-modal-prize-name" id="furryModalPrizeName">Prize</div>
+        <div class="win-modal-value-row" id="furryModalValueRow"></div>
+        <div class="win-modal-divider"></div>
+        <button class="claim-button" id="furryClaimButton" data-i18n="claim">Claim!</button>
       </div>
     </div>
 
