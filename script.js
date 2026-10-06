@@ -5160,6 +5160,9 @@ async function initializeApp() {
   Countdown.init();
   TonWallet.init()
 
+  document.querySelectorAll('[data-cost="furry"]').forEach(el => el.textContent = CONFIG.FURRY_SPIN_COST);
+  document.querySelectorAll('[data-cost="void"]').forEach(el => el.textContent = CONFIG.VOID_SPIN_COST);
+
   startWheels();
 }
 
