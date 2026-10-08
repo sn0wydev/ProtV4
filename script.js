@@ -1683,12 +1683,49 @@ const BackendAPI = {
   // ── Coins ──
 
   async getUserCoins()   { return this._cloudGet('userCoins', STATE.userCoins); },
-  async saveUserCoins(v) { const ok = await this._cloudSet('userCoins', v); this.syncUserProfile({ coins: v }); return ok; },
+  async saveUserCoins(v) { const ok = await this._cloudSet('userCoins', v); this._markServerValue('coins', v); this.syncUserProfile({ coins: v }); return ok; },
 
   // ── Stars ──
 
   async getUserStars()   { return this._cloudGet('userStars', STATE.userStars); },
-  async saveUserStars(v) { const ok = await this._cloudSet('userStars', v); this.syncUserProfile({ stars: v }); return ok; },
+  async saveUserStars(v) { const ok = await this._cloudSet('userStars', v); this._markServerValue('stars', v); this.syncUserProfile({ stars: v }); return ok; },
+
+  // ── Server-side adjustments (support bot /addstars etc.) ──
+  // The balance lives in Telegram CloudStorage, which only this client can
+  // write. The support bot can only change the VGDataStorage users row, so
+  // the client must pull that row back in. We remember the last value we
+  // pushed/confirmed; if the server row differs from it, someone else
+  // (the bot) changed it and the server value wins. Otherwise the client
+  // value is still the freshest and is kept.
+  _markServerValue(field, v) {
+    try { localStorage.setItem(`srv_${field}`, String(v)); } catch {}
+  },
+
+  async fetchServerBalance() {
+    const userId = STATE.tg?.initDataUnsafe?.user?.id;
+    if (!userId) return null;
+    try {
+      const res = await fetch(`${DATA_STORE_URL}/users/${userId}?t=${Date.now()}`, { cache: 'no-store' });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const u = data.user || data;
+      const coins = Number(u.coins), stars = Number(u.stars);
+      return {
+        coins: Number.isFinite(coins) ? Math.trunc(coins) : null,
+        stars: Number.isFinite(stars) ? Math.trunc(stars) : null
+      };
+    } catch { return null; }
+  },
+
+  // Returns the value to use for `field` given the local and server values.
+  _reconcile(field, local, server) {
+    if (server == null) return local;
+    let last = null;
+    try { const raw = localStorage.getItem(`srv_${field}`); last = raw == null ? null : parseInt(raw, 10); } catch {}
+    if (last == null) return Math.max(local, server);   // first run: never lose a real balance
+    if (server !== last) return server;                 // changed externally (bot) → server wins
+    return local;                                       // unchanged → client is authoritative
+  },
 
   // ── Leaderboard profile sync ──
   // Fire-and-forget push to VGDataStorage's users table. Never blocks the
@@ -1782,7 +1819,16 @@ const BackendAPI = {
     if (STATE.isSyncing) return;
     STATE.isSyncing = true;
 
-    const [coins, stars] = await Promise.all([this.getUserCoins(), this.getUserStars()]);
+    let [coins, stars, remote] = await Promise.all([this.getUserCoins(), this.getUserStars(), this.fetchServerBalance()]);
+
+    if (remote) {
+      const newCoins = this._reconcile('coins', coins, remote.coins);
+      const newStars = this._reconcile('stars', stars, remote.stars);
+      if (newCoins !== coins) { coins = newCoins; await this._cloudSet('userCoins', coins); }
+      if (newStars !== stars) { stars = newStars; await this._cloudSet('userStars', stars); }
+      this._markServerValue('coins', coins);
+      this._markServerValue('stars', stars);
+    }
 
     let changed = false;
     if (coins !== STATE.userCoins) { STATE.userCoins = coins; changed = true; }
