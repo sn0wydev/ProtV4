@@ -14,6 +14,7 @@
 <body class="no-scroll">
 
   <!-- Loading Screen -->
+<div class="version-tag" id="versionTag" aria-hidden="true"></div>
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-container">
     <div class="loading-status-heading" id="loadingStatusHeading" style="display:none;"></div>
@@ -97,32 +98,40 @@
         <div class="events-carousel">
           <div class="events-track" id="eventsTrack">
 
-            <div class="event-card event-card--birthday" data-event-id="app-birthday">
-              <span class="event-confetti" aria-hidden="true">
-                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-              </span>
+            <a class="event-card event-card--rocket" href="#" data-event-id="rocket-promo" onclick="TelegramGame.Navigation.navigateTo('rocket');return false;">
+              <span class="rkc-nebula" aria-hidden="true"></span>
+              <span class="rkc-streaks" aria-hidden="true"></span>
+              <span class="rkc-stars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><b></b><b></b><b></b></span>
+              <span class="rkc-dash" aria-hidden="true"><u></u><u></u><u></u><u></u><u></u></span>
               <span class="event-sheen" aria-hidden="true"></span>
-              <div class="event-art event-art--left"><img src="assets/BirthdayCake.svg" alt=""></div>
-              <div class="event-copy event-copy--center">
-                <span class="event-badge" data-i18n="eventBadgeAnniversary">🎉 Anniversary</span>
-                <div class="event-title event-title--hero">
-                  <span class="event-title-sm" data-i18n="eventBirthdayTitleSm">App</span>
-                  <span class="event-title-lg" data-i18n="eventBirthdayTitleLg">Birthday!</span>
-                </div>
-                <div class="event-sub" data-i18n="eventBirthdaySub">Thank you for an amazing year</div>
-              </div>
-              <div class="event-art event-art--right"><img src="assets/Balloons.svg" alt=""></div>
-            </div>
+              <div class="rkc-title"><span class="rkc-title-sm" data-i18n="eventRocketTitleA">Fly up to the</span><span class="rkc-title-lg" data-i18n="eventRocketTitleB">Skies!</span></div>
+              <span class="rkc-x rkc-x1" aria-hidden="true">x67</span>
+              <span class="rkc-x rkc-x2" aria-hidden="true">x228</span>
+              <span class="rkc-x rkc-x3" aria-hidden="true">x557</span>
+              <span class="rkc-trailwrap" aria-hidden="true"><svg class="rkc-trail" width="1" height="148" viewBox="0 0 1 148" overflow="visible" aria-hidden="true">
+                <defs>
+                  <linearGradient id="rkcTr" gradientUnits="userSpaceOnUse" x1="-420" y1="0" x2="-38" y2="0"><stop offset="0" stop-color="#7b5cff" stop-opacity="0"/><stop offset=".6" stop-color="#9b7dff" stop-opacity=".85"/><stop offset="1" stop-color="#e4dbff"/></linearGradient>
+                  <linearGradient id="rkcFill" gradientUnits="userSpaceOnUse" x1="-420" y1="0" x2="-38" y2="0"><stop offset="0" stop-color="#7b5cff" stop-opacity="0"/><stop offset=".7" stop-color="#7b5cff" stop-opacity=".35"/><stop offset="1" stop-color="#7b5cff" stop-opacity="0"/></linearGradient>
+                </defs>
+                <path d="M-900 152 C-420 150 -170 144 -38 94 L-38 160 Z" fill="url(#rkcFill)"/>
+                <path d="M-900 152 C-420 150 -170 144 -38 94" fill="none" stroke="url(#rkcTr)" stroke-width="3.6" stroke-linecap="round"/>
+              </svg></span>
+              <span class="rkc-ship" aria-hidden="true"><img src="assets/RocketCard.svg" alt="" draggable="false"></span>
+              <span class="rkc-big" aria-hidden="true">x999</span>
+            </a>
 
-            <a class="event-card event-card--teal" href="#" data-event-id="double-stars" onclick="TelegramGame.Navigation.navigateTo('deposit');return false;">
-              <div class="event-clouds" aria-hidden="true"><img src="assets/Clouds.svg" alt=""></div>
+            <a class="event-card event-card--battle" href="#" data-event-id="battle-promo" onclick="TelegramGame.Navigation.navigateTo('battle');return false;">
+              <span class="bc-stars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
               <span class="event-sheen" aria-hidden="true"></span>
-              <div class="event-art"><img src="assets/TStars.svg" alt=""></div>
-              <div class="event-copy">
-                <span class="event-badge" data-i18n="eventBadgeLimited">Limited</span>
-                <div class="event-title event-title--big" data-i18n="eventStarsTitle">Double Stars weekend</div>
-                <div class="event-sub" data-i18n="eventStarsSub">Bonus Stars on every deposit</div>
+              <div class="bc-copy">
+                <span class="event-badge" data-i18n="eventBattleBadge">Winner takes all</span>
+                <div class="bc-title"><span class="bc-title-sm" data-i18n="eventBattleSm">Gift</span><span class="bc-title-lg" data-i18n="eventBattleLg">Battle!</span></div>
+                <div class="bc-sub" data-i18n="eventBattleSub">Bet a gift, win the whole pot</div>
               </div>
+              <div class="bc-reel" aria-hidden="true">
+                <div class="bc-track"><span class="bc-tile" style="--tc:#7b5cff"><i class="bc-av"></i><img src="assets/Bear.svg" alt=""><b>24%</b></span><span class="bc-tile" style="--tc:#ff9d5c"><i class="bc-av"></i><img src="assets/Diamond.svg" alt=""><b>52%</b></span><span class="bc-tile" style="--tc:#35d6e8"><i class="bc-av"></i><img src="assets/Cake.svg" alt=""><b>18%</b></span><span class="bc-tile" style="--tc:#ff4d8d"><i class="bc-av"></i><img src="assets/Rose.svg" alt=""><b>6%</b></span><span class="bc-tile" style="--tc:#7b5cff"><i class="bc-av"></i><img src="assets/Bear.svg" alt=""><b>24%</b></span><span class="bc-tile" style="--tc:#ff9d5c"><i class="bc-av"></i><img src="assets/Diamond.svg" alt=""><b>52%</b></span><span class="bc-tile" style="--tc:#35d6e8"><i class="bc-av"></i><img src="assets/Cake.svg" alt=""><b>18%</b></span><span class="bc-tile" style="--tc:#ff4d8d"><i class="bc-av"></i><img src="assets/Rose.svg" alt=""><b>6%</b></span></div>
+              </div>
+              <span class="bc-line" aria-hidden="true"></span>
             </a>
 
           </div>
@@ -134,6 +143,35 @@
           <div class="echo-strip-wrap" id="echoWrapper">
             <!-- Notification cubes are injected into #notificationContainer by JS. Keep it empty so the empty state shows. -->
             <div class="card-base content-box-top" id="notificationContainer" data-i18n-empty="liveGiftsEmpty" data-empty="Gifts you win show up here."></div>
+          </div>
+        </div>
+
+        <!-- ROCKET entry card (placeholder, design comes later) -->
+        <!-- Entry cards for the two mini games -->
+        <div class="ec ec-rocket" id="rocketCard" role="button" tabindex="0" aria-label="Rocket">
+          <span class="ec-grid" aria-hidden="true"></span>
+          <div class="ec-copy">
+            <span class="ec-pill" data-i18n="ecRocketPill">up to x500</span>
+            <b class="ec-title">Rocket</b>
+            <span class="ec-sub" data-i18n="ecRocketSub">Cash out before it flies away</span>
+          </div>
+          <div class="ec-art" aria-hidden="true">
+            <svg class="ec-curve" viewBox="0 0 150 96" preserveAspectRatio="none"><defs><linearGradient id="ecCv" x1="0" x2="1"><stop offset="0" stop-color="#ffb25b" stop-opacity="0"/><stop offset="1" stop-color="#ffd8a0"/></linearGradient></defs><path d="M-4 92 C50 90 92 74 118 30" fill="none" stroke="url(#ecCv)" stroke-width="2.6" stroke-linecap="round"/></svg>
+            <span class="ec-ship"><img src="assets/RocketCard.svg" alt="" draggable="false"></span>
+            <span class="ec-mult" id="ecMult">x1.00</span>
+          </div>
+        </div>
+        <div class="ec ec-battle" id="battleCard" role="button" tabindex="0" aria-label="Gift Battle">
+          <span class="ec-grid" aria-hidden="true"></span>
+          <div class="ec-copy">
+            <span class="ec-pill" data-i18n="ecBattlePill">no player limit</span>
+            <b class="ec-title">Gift Battle</b>
+            <span class="ec-sub" data-i18n="ecBattleSub">Winner takes the pot</span>
+          </div>
+          <div class="ec-art ec-reel" aria-hidden="true">
+            <div class="ec-track"><i><img src="assets/Diamond.svg" alt=""></i><i><img src="assets/Trophy.svg" alt=""></i><i><img src="assets/Ring.svg" alt=""></i><i><img src="assets/Heart.svg" alt=""></i><i><img src="assets/Gift.svg" alt=""></i><i><img src="assets/Rocket.svg" alt=""></i>
+              <i><img src="assets/Diamond.svg" alt=""></i><i><img src="assets/Trophy.svg" alt=""></i><i><img src="assets/Ring.svg" alt=""></i><i><img src="assets/Heart.svg" alt=""></i><i><img src="assets/Gift.svg" alt=""></i><i><img src="assets/Rocket.svg" alt=""></i></div>
+            <span class="ec-line"></span>
           </div>
         </div>
 
@@ -575,6 +613,116 @@
           </div>
         </div>
       </div>
+
+
+      <!-- ============ ROCKET ============ -->
+      <div class="page-content" id="page-rocket">
+        <button class="spin-back-btn" onclick="TelegramGame.Navigation.navigateTo('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span data-i18n="backToHome">Home</span>
+        </button>
+
+        <div class="rk-head">
+          <div>
+            <span class="eyebrow">Mini game</span>
+            <h1 class="rk-title">Rocket</h1>
+          </div>
+        </div>
+
+        <div class="rk-history" id="rkHistory" aria-label="Previous rounds"></div>
+
+        <div class="rk-stage" id="rkStage">
+          <canvas id="rkCanvas"></canvas>
+          <div class="rk-lottie" id="rkLottie" hidden></div>
+          <div class="rk-mult" id="rkMult"><span id="rkMultNum">1.00</span><small>x</small></div>
+          <div class="rk-sub" id="rkSub">Connecting…</div>
+          <div class="rk-ladder" id="rkLadder" hidden></div>
+        </div>
+
+        <div class="rk-card rk-bet" id="rkBet">
+          <div class="rk-seg" role="tablist">
+            <button type="button" class="on" data-mode="stars"><img src="assets/TStars.svg" alt="">Stars</button>
+            <button type="button" data-mode="gift"><img src="assets/Gift.svg" alt="">Gift</button>
+          </div>
+
+          <div class="rk-pane" id="paneStars">
+            <div class="rk-amount">
+              <button type="button" class="rk-step" data-step="-1" aria-label="Less">−</button>
+              <label><input id="rkAmount" type="number" inputmode="numeric" min="50" value="50"><img src="assets/TStars.svg" alt=""></label>
+              <button type="button" class="rk-step" data-step="1" aria-label="More">+</button>
+            </div>
+            <div class="rk-chips" id="rkChips">
+              <button type="button" data-v="50">50</button><button type="button" data-v="100">100</button>
+              <button type="button" data-v="250">250</button><button type="button" data-v="500">500</button>
+              <button type="button" data-v="half">½</button><button type="button" data-v="double">2×</button>
+            </div>
+          </div>
+
+          <div class="rk-pane" id="paneGift" hidden>
+            <div class="rk-gifts" id="rkGifts"></div>
+          </div>
+
+          <label class="rk-auto">
+            <span>Auto cash-out</span>
+            <span class="rk-auto-in"><input id="rkAuto" type="number" step="0.1" min="1.1" placeholder="off"><b>x</b></span>
+          </label>
+
+          <button type="button" class="rk-go" id="rkGo">Place bet</button>
+        </div>
+
+        <div class="rk-card">
+          <div class="rk-card-h"><span>Players this round</span><span id="rkPlayers" class="rk-dim"></span></div>
+          <ul class="rk-list" id="rkList"></ul>
+        </div>
+      </div>
+
+      <div class="rk-toast" id="rkToast"></div>
+      <div class="rk-pop" id="rkPop" hidden></div>
+
+      <!-- ============ GIFT BATTLE ============ -->
+      <div class="page-content" id="page-battle">
+        <button class="spin-back-btn" onclick="TelegramGame.Navigation.navigateTo('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span data-i18n="backToHome">Home</span>
+        </button>
+
+        <div class="rk-head">
+          <div>
+            <span class="eyebrow">Mini game</span>
+            <h1 class="rk-title">Gift Battle</h1>
+          </div>
+        </div>
+
+        <div class="rk-history" id="btHistory" aria-label="Previous winners"></div>
+
+        <div class="bt-stage" id="btStage">
+          <div class="bt-pot">
+          <div class="bt-stat bt-stat--pot"><span>Pot</span><b><img src="assets/TStars.svg" alt=""><em id="btPotVal">0</em></b></div>
+          <div class="bt-stat"><span>Gifts</span><b id="btPotItems">0</b></div>
+          <div class="bt-stat"><span>Players</span><b id="btPlayers">0</b></div>
+        </div>
+        <div class="bt-reel" id="btReel">
+            <div class="bt-track" id="btTrack"></div>
+            <div class="bt-line"></div>
+          </div>
+          <div class="bt-status" id="btStatus">Connecting…</div>
+        </div>
+
+        <div class="rk-card">
+          <div class="rk-card-h"><span>Your gifts</span><span id="btSlots" class="rk-dim"></span></div>
+          <div class="rk-gifts bt-gifts" id="btGifts"></div>
+          <div class="bt-chance" id="btChance"></div>
+          <button type="button" class="rk-go" id="btGo">Pick gifts to join</button>
+        </div>
+
+        <div class="rk-card">
+          <div class="rk-card-h"><span>In this battle</span><span id="btCount" class="rk-dim"></span></div>
+          <ul class="rk-list bt-list" id="btList"></ul>
+        </div>
+      </div>
+
+      <div class="rk-toast" id="btToast"></div>
+      <div class="rk-pop" id="btPop" hidden></div>
 
       <!-- ============ VOID SPIN ============ -->
       <div class="page-content" id="page-voidspin">
