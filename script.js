@@ -4978,6 +4978,33 @@ const EventsCarousel = {
     }, { passive: true });
 
     window.addEventListener('resize', () => this.goTo(this.activeIndex, false));
+    this.initAutoplay();
+  },
+
+  autoMs: 15000,
+  resumeMs: 8000,
+  autoTimer: null,
+  pausedUntil: 0,
+
+  initAutoplay() {
+    if (this.cards.length < 2) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const hold = () => { this.pausedUntil = Date.now() + this.resumeMs; };
+    ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(ev =>
+      this.track.addEventListener(ev, hold, { passive: true }));
+    this.dotsEl.addEventListener('click', hold);
+    this.track.addEventListener('mouseenter', () => { this.pausedUntil = Infinity; });
+    this.track.addEventListener('mouseleave', hold);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) hold(); });
+    this.autoTimer = setInterval(() => this.autoTick(), this.autoMs);
+  },
+
+  autoTick() {
+    if (document.hidden || Date.now() < this.pausedUntil) return;
+    const r = this.track.getBoundingClientRect();
+    if (r.width === 0 || r.bottom < 0 || r.top > window.innerHeight) return;
+    const next = (this.activeIndex + 1) % this.cards.length;
+    this.goTo(next, true);
   },
 
   renderDots() {
