@@ -1887,12 +1887,15 @@ const GameAPI = {
   _firstRefresh: null,
 
   async req(method, path, body) {
-    const res = await fetch(GAME_API_BASE + path, {
-      method,
-      headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': STATE.tg?.initData || '' },
-      body: body ? JSON.stringify(body) : undefined,
-      cache: 'no-store'
-    });
+    let res;
+    try {
+      res = await fetch(GAME_API_BASE + path, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': STATE.tg?.initData || '' },
+        body: body ? JSON.stringify(body) : undefined,
+        cache: 'no-store'
+      });
+    } catch (err) { const e = new Error('Server is not reachable, try again in a moment'); e.code = 'OFFLINE'; throw e; }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const e = new Error(data.error || `HTTP ${res.status}`);
@@ -6399,6 +6402,32 @@ const RK_IMG = new Image(); RK_IMG.src = 'assets/RocketFlight.svg';
 const RK_IDLE = new Image(); RK_IDLE.src = 'assets/RocketIdle.svg';   // upright rocket (with its own flame) standing on the pad
 // In-flight rocket: assets/Rocket.json (Lottie) laid over the canvas; falls back to the drawn artwork if it can't load.
 const RK_LT = { anim: null, el: null, loading: false, failed: false, show: false, x: 0, y: 0, ang: 0, size: 76 };
+const LiveLink = {
+  down: false, since: 0, _el: null,
+  el() {
+    if (this._el) return this._el;
+    const e = document.createElement('div'); e.className = 'live-link-banner'; e.setAttribute('role', 'status'); e.setAttribute('aria-live', 'polite');
+    e.innerHTML = '<span class="ll-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.8a15 15 0 0 1 4.2-2.6M22 8.8a15 15 0 0 0-9.4-3.7M5.2 12.6a10 10 0 0 1 3-1.8M18.8 12.6a10 10 0 0 0-2.6-1.7M8.6 16.2a5 5 0 0 1 6.8 0"/><circle cx="12" cy="19.5" r=".6" fill="currentColor"/><path d="M3 3l18 18"/></svg></span><span class="ll-tx"><b>Connection lost</b><small>Reconnecting…</small></span><span class="ll-spin"></span>';
+    document.body.appendChild(e); return (this._el = e);
+  },
+  set(down) {
+    if (down === this.down) return;
+    this.down = down; this.since = Date.now();
+    const e = this.el(), b = e.querySelector('b'), sm = e.querySelector('small');
+    clearTimeout(this._ht);
+    if (down) { e.classList.remove('ok'); b.textContent = 'Connection lost'; sm.textContent = 'Reconnecting…'; e.classList.add('show'); }
+    else {
+      if (e.classList.contains('show')) { e.classList.add('ok'); b.textContent = 'Back online'; sm.textContent = 'Connection restored'; this._ht = setTimeout(() => e.classList.remove('show', 'ok'), 1800); }
+      try { BackendAPI.syncBalance(); } catch (_) {}
+    }
+  },
+  guard() {
+    if (!this.down) return false;
+    try { (Rocket.active ? Rocket : Battle).toast('Server is not reachable, wait a moment'); } catch (_) {}
+    return true;
+  }
+};
+
 const Rocket = {
   K: 0.11, snap: null, off: 0, mode: 'stars', kind: 'gift', pick: null, abort: null, poll: null, raf: 0, active: false, busy: false,
   announced: 0, tipPos: null, canvasReady: false, fx: { sparks: [], rings: [], debris: [], smoke: [], flash: 0, x: 0, y: 0 }, stars: null,
@@ -6451,6 +6480,7 @@ const Rocket = {
   leave() {
     this.active = false;
     try { this.abort?.abort(); } catch {}
+    clearInterval(this.wd); LiveLink.set(false);
     clearInterval(this.poll); this.poll = null; cancelAnimationFrame(this.raf);
   },
 
@@ -6464,8 +6494,11 @@ const Rocket = {
       if (!res.ok || !res.body) throw new Error('stream ' + res.status);
       clearInterval(this.poll); this.poll = null;
       const rd = res.body.getReader(), dec = new TextDecoder(); let buf = '';
+      this.lastRx = Date.now(); clearInterval(this.wd);
+      this.wd = setInterval(() => { if (Date.now() - this.lastRx > 22000) { ctl.stale = true; try { ctl.abort(); } catch (_) {} } }, 4000);
       for (;;) {
         const { value, done } = await rd.read(); if (done) break;
+        this.lastRx = Date.now(); LiveLink.set(false);
         buf += dec.decode(value, { stream: true });
         let i; while ((i = buf.indexOf('\n\n')) >= 0) {
           const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
@@ -6475,14 +6508,16 @@ const Rocket = {
       }
       throw new Error('stream closed');
     } catch (e) {
-      if (ctl.signal.aborted || !this.active) return;
+      clearInterval(this.wd);
+      if ((ctl.signal.aborted && !ctl.stale) || !this.active) return;
+      LiveLink.set(true);
       this.startPolling();
       setTimeout(() => { if (this.active && this.abort === ctl) this.connect(); }, 4000);
     }
   },
   startPolling() {
     if (this.poll) return;
-    const tick = async () => { try { this.apply(await GameAPI.req('GET', '/api/rocket/state')); } catch {} };
+    const tick = async () => { try { this.apply(await GameAPI.req('GET', '/api/rocket/state')); LiveLink.set(false); } catch { LiveLink.set(true); } };
     tick(); this.poll = setInterval(tick, 1200);
   },
 
@@ -6500,6 +6535,8 @@ const Rocket = {
   },
   tFly() {
     const s = this.snap; if (!s) return 0;
+    if (LiveLink.down && s.phase === 'fly') { if (this._frz == null) this._frz = Math.max(0, (Date.now() + this.off - s.flyStartedAt) / 1000); return this._frz; }
+    this._frz = null;
     if (s.phase === 'crash') return Math.log(s.crashAt) / this.K;
     if (s.phase !== 'fly') return 0;
     return Math.max(0, (Date.now() + this.off - s.flyStartedAt) / 1000);
@@ -6593,7 +6630,7 @@ const Rocket = {
   },
   showUpgrade(res, m) {
     const pop = this.$('#rkPop'), same = res.from === res.to, nft = this.isNft(res.from);
-    const extra = nft ? (res.stars ? ` &nbsp;+ ${this.fmt(res.stars)} ★ Stars` : '') : (res.coins ? ` &nbsp;+ ${this.fmt(res.coins)} coins` : '');
+    const extra = res.stars ? ` &nbsp;+ ${this.fmt(res.stars)} ★ Stars` : (res.coins ? ` &nbsp;+ ${this.fmt(res.coins)} coins` : '');
     pop.innerHTML = `<div class="rk-pop-box"><h3>${same ? 'Cashed out!' : (nft ? 'NFT upgraded!' : 'Gift upgraded!')}</h3><p>at ${m.toFixed(2)}x</p>
       <div class="rk-up">${this.img(res.from, 'from')}<span class="arr">→</span>${this.img(res.to, 'to')}</div>
       <p><b>${same ? this.esc(res.from) : this.esc(res.from) + ' → ' + this.esc(res.to)}</b>${extra}</p><button type="button" id="rkPopOk">Nice</button></div>`;
@@ -6838,6 +6875,7 @@ const Battle = {
   leave() { clearInterval(this._vt);
     this.active = false;
     try { this.abort?.abort(); } catch {}
+    clearInterval(this.wd); LiveLink.set(false);
     clearInterval(this.poll); this.poll = null; cancelAnimationFrame(this.raf);
   },
 
@@ -6851,8 +6889,11 @@ const Battle = {
       if (!res.ok || !res.body) throw new Error('stream ' + res.status);
       clearInterval(this.poll); this.poll = null;
       const rd = res.body.getReader(), dec = new TextDecoder(); let buf = '';
+      this.lastRx = Date.now(); clearInterval(this.wd);
+      this.wd = setInterval(() => { if (Date.now() - this.lastRx > 22000) { ctl.stale = true; try { ctl.abort(); } catch (_) {} } }, 4000);
       for (;;) {
         const { value, done } = await rd.read(); if (done) break;
+        this.lastRx = Date.now(); LiveLink.set(false);
         buf += dec.decode(value, { stream: true });
         let i; while ((i = buf.indexOf('\n\n')) >= 0) {
           const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
@@ -6862,8 +6903,10 @@ const Battle = {
       }
       throw new Error('stream closed');
     } catch (e) {
-      if (ctl.signal.aborted || !this.active) return;
-      if (!this.poll) { const tick = async () => { try { this.apply(await GameAPI.req('GET', '/api/battle/state')); } catch {} }; tick(); this.poll = setInterval(tick, 1200); }
+      clearInterval(this.wd);
+      if ((ctl.signal.aborted && !ctl.stale) || !this.active) return;
+      LiveLink.set(true);
+      if (!this.poll) { const tick = async () => { try { this.apply(await GameAPI.req('GET', '/api/battle/state')); LiveLink.set(false); } catch { LiveLink.set(true); } }; tick(); this.poll = setInterval(tick, 1200); }
       setTimeout(() => { if (this.active && this.abort === ctl) this.connect(); }, 4000);
     }
   },
