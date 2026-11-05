@@ -3,18 +3,20 @@
 // ---- Version tag: shown at the top while loading, then fades a few seconds after the app opens. ----
 // APP_VERSION is edited by hand; the front-end commit is the newest commit of the front-end repo (GitHub);
 // the back-end commit comes from the game server's /api/config (Railway's RAILWAY_GIT_COMMIT_SHA).
-const APP_VERSION = 'V2.1.00';
+const APP_VERSION = 'V2.1.01';
 const FRONT_REPO = 'sn0wydev/ProtV4', FRONT_BRANCH = 'main';
 const VersionTag = {
   front: '…', back: '…', el: null, timer: 0,
   init() {
-    this.el = document.getElementById('versionTag'); this.render();
+    this.el = document.getElementById('versionTag'); this.render(); this.shown();
     fetch(`https://api.github.com/repos/${FRONT_REPO}/commits/${FRONT_BRANCH}`, { headers: { Accept: 'application/vnd.github+json' } })
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(r.status)))).then(j => this.set({ front: String(j.sha).slice(0, 7) })).catch(() => this.set({ front: 'n/a' }));
     return this;
   },
   set(p) { Object.assign(this, p); this.render(); },
   render() { if (this.el) this.el.textContent = `${APP_VERSION} · front ${this.front} · back ${this.back}`; },
+  // The Profile/Settings page shows the same number, so APP_VERSION is the only place to edit.
+  shown() { document.querySelectorAll('.version-number').forEach(e => { e.textContent = APP_VERSION.replace(/^V/i, 'v'); }); },
   fadeSoon(ms = 4000) { clearTimeout(this.timer); this.timer = setTimeout(() => this.el && this.el.classList.add('off'), ms); },
 };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => VersionTag.init()); else VersionTag.init();
@@ -400,6 +402,18 @@ const TRANSLATIONS = {
     freeDropsEyebrow: 'free drops every day',
     freeHighlight: 'Telegram',
     channelSuffix: 'Channel',
+    fairTitle: 'Provably fair',
+    fairHow: 'Before every round the server locks in a secret and shows its SHA-256 fingerprint. After the round the secret is revealed, so anyone can check that it matches the fingerprint and recompute the result.',
+    fairCur: 'Current round',
+    fairLast: 'Last round',
+    fairOk: 'Verified',
+    fairBad: 'Mismatch',
+    fairWait: 'The secret appears after the round',
+    fairCopied: 'Copied',
+    fairCrash: 'Crashed at',
+    fairWinner: 'Winner',
+    fairRecomputed: 'recomputed',
+    fairHashOnly: 'Hash matches the secret',
     channelSub: 'Join to never miss a giveaway or secret code.',
     joinChannel: 'Join Channel',
 
@@ -660,6 +674,18 @@ const TRANSLATIONS = {
     freeDropsEyebrow: 'бесплатные дропы каждый день',
     freeHighlight: 'FREE',
     channelSuffix: 'Канал',
+    fairTitle: 'Доказуемая честность',
+    fairHow: 'Перед каждым раундом сервер фиксирует секрет и показывает его отпечаток SHA-256. После раунда секрет раскрывается, поэтому любой может проверить, что он совпадает с отпечатком, и пересчитать результат.',
+    fairCur: 'Текущий раунд',
+    fairLast: 'Прошлый раунд',
+    fairOk: 'Проверено',
+    fairBad: 'Не совпало',
+    fairWait: 'Секрет появится после раунда',
+    fairCopied: 'Скопировано',
+    fairCrash: 'Взрыв на',
+    fairWinner: 'Победитель',
+    fairRecomputed: 'пересчитано',
+    fairHashOnly: 'Отпечаток совпадает с секретом',
     channelSub: 'Подпишитесь, чтобы не пропустить розыгрыш или секретный код.',
     joinChannel: 'Подписаться',
 
@@ -890,6 +916,18 @@ const TRANSLATIONS = {
     freeDropsEyebrow: 'drops gratis cada día',
     freeHighlight: 'GRATIS',
     channelSuffix: 'Canal',
+    fairTitle: 'Juego verificable',
+    fairHow: 'Antes de cada ronda el servidor fija un secreto y muestra su huella SHA-256. Al terminar la ronda se revela el secreto, así cualquiera puede comprobar que coincide con la huella y recalcular el resultado.',
+    fairCur: 'Ronda actual',
+    fairLast: 'Ronda anterior',
+    fairOk: 'Verificado',
+    fairBad: 'No coincide',
+    fairWait: 'El secreto aparece al terminar la ronda',
+    fairCopied: 'Copiado',
+    fairCrash: 'Explotó en',
+    fairWinner: 'Ganador',
+    fairRecomputed: 'recalculado',
+    fairHashOnly: 'La huella coincide con el secreto',
     channelSub: 'Únete para no perderte ningún sorteo o código secreto.',
     joinChannel: 'Unirse al canal',
 
@@ -1120,6 +1158,18 @@ const TRANSLATIONS = {
     freeDropsEyebrow: 'drops gratuits chaque jour',
     freeHighlight: 'GRATUIT',
     channelSuffix: 'Chaîne',
+    fairTitle: 'Équité prouvable',
+    fairHow: 'Avant chaque tour, le serveur fige un secret et affiche son empreinte SHA-256. Après le tour, le secret est révélé : chacun peut vérifier qu\'il correspond à l\'empreinte et recalculer le résultat.',
+    fairCur: 'Tour en cours',
+    fairLast: 'Dernier tour',
+    fairOk: 'Vérifié',
+    fairBad: 'Différent',
+    fairWait: 'Le secret apparaît après le tour',
+    fairCopied: 'Copié',
+    fairCrash: 'Crash à',
+    fairWinner: 'Gagnant',
+    fairRecomputed: 'recalculé',
+    fairHashOnly: 'L\'empreinte correspond au secret',
     channelSub: 'Rejoignez pour ne jamais manquer un tirage ou un code secret.',
     joinChannel: 'Rejoindre la chaîne',
 
@@ -1350,6 +1400,18 @@ const TRANSLATIONS = {
     freeDropsEyebrow: 'kostenlose Drops jeden Tag',
     freeHighlight: 'GRATIS',
     channelSuffix: 'Kanal',
+    fairTitle: 'Nachweislich fair',
+    fairHow: 'Vor jeder Runde legt der Server ein Geheimnis fest und zeigt dessen SHA-256-Fingerabdruck. Nach der Runde wird das Geheimnis offengelegt, sodass jeder prüfen kann, ob es zum Fingerabdruck passt, und das Ergebnis nachrechnen kann.',
+    fairCur: 'Aktuelle Runde',
+    fairLast: 'Letzte Runde',
+    fairOk: 'Geprüft',
+    fairBad: 'Abweichung',
+    fairWait: 'Das Geheimnis erscheint nach der Runde',
+    fairCopied: 'Kopiert',
+    fairCrash: 'Crash bei',
+    fairWinner: 'Gewinner',
+    fairRecomputed: 'nachgerechnet',
+    fairHashOnly: 'Fingerabdruck passt zum Geheimnis',
     channelSub: 'Trete bei, um kein Gewinnspiel oder Geheimcode zu verpassen.',
     joinChannel: 'Kanal beitreten',
 
@@ -1580,6 +1642,18 @@ const TRANSLATIONS = {
     freeDropsEyebrow: '每日免费掉落',
     freeHighlight: '免费',
     channelSuffix: '频道',
+    fairTitle: '可证明公平',
+    fairHow: '每回合开始前，服务器会锁定一个密钥并公布其 SHA-256 指纹。回合结束后密钥公开，任何人都可以核对它与指纹是否一致，并重新计算结果。',
+    fairCur: '当前回合',
+    fairLast: '上一回合',
+    fairOk: '已验证',
+    fairBad: '不匹配',
+    fairWait: '回合结束后显示密钥',
+    fairCopied: '已复制',
+    fairCrash: '爆炸于',
+    fairWinner: '获胜者',
+    fairRecomputed: '已重新计算',
+    fairHashOnly: '指纹与密钥一致',
     channelSub: '加入以不错过任何抽奖或秘密代码。',
     joinChannel: '加入频道',
 
@@ -2046,6 +2120,29 @@ const Reel = {
     const distance = Math.max(stride, mid(target) - centerX);        // px the strip has to travel
     // speed(p) = A·(1-p)^4 travels A·frames/5 px over the spin, so pick A to cover `distance` exactly
     return { target, distance, peakSpeed: (ms) => 5 * distance / (ms / (1000 / 60)) };
+  },
+
+  // The reel is driven by the CLOCK: total travel at time t is  distance x (1 - (1 - t/duration)^5)  (the same slow-down curve as before).
+  // Moving it frame by frame (speed x frame time) made the stopping point depend on the frame rate: on a phone that stutters the
+  // reel stopped one or more cubes away from the prize cube, and the prize then visibly changed when the wheel snapped to centre.
+  drive: {},
+  start(key, plan, ms) { this.drive[key] = { t0: performance.now(), ms, dist: plan.distance, done: 0, fin: false }; },
+  delta(key, now) {
+    const d = this.drive[key]; if (!d) return 0;
+    const p = Math.min(Math.max(((now || performance.now()) - d.t0) / d.ms, 0), 1);
+    const T = d.dist * (1 - Math.pow(1 - p, 5)), step = T - d.done;
+    d.done = T; if (p >= 1) d.fin = true;
+    return step;
+  },
+  // run cb once the last bit of travel has been applied to the strip (falls back after 1.5 s so a spin can never hang)
+  whenSettled(key, cb) {
+    const t0 = performance.now();
+    const wait = () => {
+      const d = this.drive[key];
+      if (!d || d.fin || performance.now() - t0 > 1500) { delete this.drive[key]; cb(); return; }
+      requestAnimationFrame(wait);
+    };
+    wait();
   }
 };
 
@@ -2701,6 +2798,88 @@ const Navigation = {
     if (pageName === 'rocket') Rocket.enter(); else if (Rocket.active) Rocket.leave();
     if (pageName === 'battle') Battle.enter(); else if (Battle.active) Battle.leave();
 
+  }
+};
+
+// ============================================
+// PROVABLY FAIR (Rocket + Gift Battle): shows the round commitment, and re-checks the last finished round in the browser.
+// The server publishes sha256(secret) before the round and the secret after it. Rocket: crash = floor(100*edge/(1-r))/100 with
+// r = first 6 bytes of HMAC-SHA256(secret, 'voidgifts-rocket') / 2^48. Battle: r from HMAC(secret, 'voidgifts-battle'), winner = first player
+// whose cumulative stake share passes r (players in join order).
+// ============================================
+const Fair = {
+  S: { rocket: {}, battle: {} },
+  enc: (s) => new TextEncoder().encode(s),
+  hex: (buf) => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''),
+  async sha(s) { return this.hex(await crypto.subtle.digest('SHA-256', this.enc(s))); },
+  async rnd(secret, label) {
+    const key = await crypto.subtle.importKey('raw', this.enc(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, this.enc(label)));
+    let n = 0; for (let i = 0; i < 6; i++) n = n * 256 + sig[i];
+    return n / 2 ** 48;
+  },
+  render(kind, s) {
+    try {
+      const st = this.S[kind]; if (!s) return;
+      st.cur = { id: s.roundId, hash: s.hash };
+      if (s.secret && s.hash && (!st.last || st.last.id !== s.roundId)) {
+        st.last = { id: s.roundId, hash: s.hash, secret: s.secret, state: 'checking' };
+        if (kind === 'rocket') Object.assign(st.last, { crashAt: s.crashAt, edge: s.edge, maxMult: s.maxMult });
+        else Object.assign(st.last, { values: (s.players || []).map(p => p.value), winner: s.spin ? s.spin.winner : null, winnerName: s.spin && s.players && s.players[s.spin.winner] ? s.players[s.spin.winner].name : '' });
+        this.verify(kind, st.last);
+      }
+      this.paint(kind);
+    } catch (e) { /* the panel is optional */ }
+  },
+  async verify(kind, L) {
+    try {
+      if (!(window.crypto && crypto.subtle)) { L.state = 'na'; return this.paint(kind); }
+      if ((await this.sha(L.secret)) !== L.hash) { L.state = 'bad'; return this.paint(kind); }
+      L.state = 'hash';
+      if (kind === 'rocket' && typeof L.edge === 'number' && L.crashAt != null) {
+        const r = await this.rnd(L.secret, 'voidgifts-rocket');
+        let c = Math.floor((100 * L.edge) / (1 - r)) / 100; c = Math.max(1, c); if (L.maxMult) c = Math.min(L.maxMult, c);
+        L.calc = c; L.state = Math.abs(c - Number(L.crashAt)) < 0.005 ? 'ok' : 'bad';
+      } else if (kind === 'battle' && L.values && L.values.length && L.winner != null) {
+        const r = await this.rnd(L.secret, 'voidgifts-battle'), total = L.values.reduce((a, b) => a + b, 0), target = r * total;
+        let cum = 0, w = L.values.length - 1; for (let i = 0; i < L.values.length; i++) { cum += L.values[i]; if (target < cum) { w = i; break; } }
+        L.calc = w; L.state = w === L.winner ? 'ok' : 'bad';
+      }
+    } catch (e) { L.state = 'na'; }
+    this.paint(kind);
+  },
+  paint(kind) {
+    const root = document.getElementById('fair-' + kind); if (!root) return;
+    const st = this.S[kind], q = (k) => root.querySelector(`[data-f="${k}"]`), t = (k) => Utils.t(k);
+    const set = (k, v) => { const e = q(k); if (e) e.textContent = v; };
+    set('cur-id', st.cur && st.cur.id ? '#' + st.cur.id : '—');
+    set('cur-hash', st.cur && st.cur.hash ? st.cur.hash : '—');
+    const L = st.last;
+    set('last-id', L ? '#' + L.id : '—');
+    set('last-secret', L ? L.secret : t('fairWait'));
+    const res = q('last-res'), stEl = q('st');
+    let line = '', cls = '';
+    if (L) {
+      if (L.state === 'ok') {
+        cls = 'ok';
+        line = kind === 'rocket' ? `✓ ${t('fairCrash')} ${Number(L.crashAt).toFixed(2)}× · ${t('fairRecomputed')} ${L.calc.toFixed(2)}×`
+                                 : `✓ ${t('fairWinner')}: ${L.winnerName || '#' + (L.winner + 1)} · ${t('fairRecomputed')}`;
+      } else if (L.state === 'hash') { cls = 'ok'; line = '✓ ' + t('fairHashOnly'); }
+      else if (L.state === 'bad') { cls = 'bad'; line = '✗ ' + t('fairBad'); }
+    }
+    if (res) { res.textContent = line; res.className = 'fair-res ' + cls; }
+    if (stEl) { stEl.textContent = L && (L.state === 'ok' || L.state === 'hash') ? '✓ ' + t('fairOk') : (L && L.state === 'bad' ? '✗ ' + t('fairBad') : ''); stEl.classList.toggle('bad', !!(L && L.state === 'bad')); }
+  },
+  init() {
+    document.querySelectorAll('.fair').forEach(root => {
+      const head = root.querySelector('.fair-h'), body = root.querySelector('.fair-b');
+      head.addEventListener('click', () => { const open = head.getAttribute('aria-expanded') !== 'true'; head.setAttribute('aria-expanded', open); body.hidden = !open; });
+      root.querySelectorAll('.fair-hash').forEach(b => b.addEventListener('click', () => {
+        const txt = b.textContent.trim(); if (!/^[0-9a-f]{64}$/i.test(txt)) return;
+        try { navigator.clipboard.writeText(txt).then(() => Utils.showToast(Utils.t('fairCopied'), 'success')); } catch (e) { /* no clipboard */ }
+      }));
+      this.paint(root.dataset.kind);
+    });
   }
 };
 
@@ -4273,6 +4452,7 @@ const SpinWheel = {
       // Scale by real elapsed time so total distance traveled depends
       // only on wall-clock duration, never on how many frames fired.
       STATE.scrollPosition += STATE.scrollSpeed * (dt / (1000 / 60));
+      STATE.scrollPosition += Reel.delta('daily', now);   // spin travel follows the clock, not the frame rate
       const stride = CONFIG.CUBE_WIDTH + CONFIG.GAP_WIDTH;
 
       // while, not if — a lag spike can cross more than one cube-width
@@ -4322,15 +4502,16 @@ const SpinWheel = {
 
     const plan = Reel.plan(cubes, document.querySelector('.wheel-container:not(.void-wheel-container)'), CONFIG.CUBE_WIDTH + CONFIG.GAP_WIDTH);
     this.renderCube(plan.target, winning);
-    this._landing = { winning };
+    this._landing = { winning, target: plan.target };
+    Reel.start('daily', plan, CONFIG.SPIN_DURATION);
 
     const startTime = Date.now();
     const tick = () => {
       if (!STATE.isSpinning) return;
       const progress  = Math.min((Date.now() - startTime) / CONFIG.SPIN_DURATION, 1);
-      STATE.scrollSpeed = plan.peakSpeed(CONFIG.SPIN_DURATION) * Math.pow(1 - progress, 4);
+      STATE.scrollSpeed = 0;   // the reel is moved by Reel.delta (wall-clock), see Reel
       if (progress < 1) { requestAnimationFrame(tick); }
-      else { STATE.scrollSpeed = 0; setTimeout(() => this.snapToCenter(), 100); }
+      else { STATE.scrollSpeed = 0; Reel.whenSettled('daily', () => setTimeout(() => this.snapToCenter(), 100)); }
     };
     tick();
   },
@@ -4350,6 +4531,8 @@ const SpinWheel = {
     });
 
     const L = this._landing || {}; this._landing = null;
+    // Always land on the cube that carries the server's prize, wherever the reel really stopped (never swap a prize under the pointer).
+    if (L.target && cubes.includes(L.target)) { const tr = L.target.getBoundingClientRect(); bestCube = L.target; snapDelta = (tr.left + tr.width / 2 - wRect.left) - center; }
 
     // Safety net (e.g. the app was backgrounded mid-spin): whatever stops under the pointer IS the prize the server paid.
 
@@ -4593,6 +4776,7 @@ const VoidSpinWheel = {
       const wheel = document.getElementById('voidWheel');
       if (wheel) {
         STATE.voidScrollPosition += STATE.voidScrollSpeed * (dt / (1000 / 60));
+        STATE.voidScrollPosition += Reel.delta('void', now);   // spin travel follows the clock, not the frame rate
         const stride = CONFIG.VOID_CUBE_WIDTH + CONFIG.VOID_GAP_WIDTH;
 
         while (STATE.voidScrollPosition >= stride) {
@@ -4655,15 +4839,16 @@ const VoidSpinWheel = {
 
     const plan = Reel.plan(cubes, document.querySelector('.void-wheel-container'), CONFIG.VOID_CUBE_WIDTH + CONFIG.VOID_GAP_WIDTH);
     this.renderCube(plan.target, winning);
-    this._landing = { winning };
+    this._landing = { winning, target: plan.target };
+    Reel.start('void', plan, CONFIG.VOID_SPIN_DURATION);
 
     const startTime = Date.now();
     const tick = () => {
       if (!STATE.voidIsSpinning) return;
       const progress = Math.min((Date.now() - startTime) / CONFIG.VOID_SPIN_DURATION, 1);
-      STATE.voidScrollSpeed = plan.peakSpeed(CONFIG.VOID_SPIN_DURATION) * Math.pow(1 - progress, 4);
+      STATE.voidScrollSpeed = 0;   // the reel is moved by Reel.delta (wall-clock), see Reel
       if (progress < 1) { requestAnimationFrame(tick); }
-      else { STATE.voidScrollSpeed = 0; setTimeout(() => this.snapToCenter(), 100); }
+      else { STATE.voidScrollSpeed = 0; Reel.whenSettled('void', () => setTimeout(() => this.snapToCenter(), 100)); }
     };
     tick();
   },
@@ -4683,6 +4868,8 @@ const VoidSpinWheel = {
     });
 
     const L = this._landing || {}; this._landing = null;
+    // Always land on the cube that carries the server's prize, wherever the reel really stopped (never swap a prize under the pointer).
+    if (L.target && cubes.includes(L.target)) { const tr = L.target.getBoundingClientRect(); bestCube = L.target; snapDelta = (tr.left + tr.width / 2 - wRect.left) - center; }
 
     // Safety net (e.g. the app was backgrounded mid-spin): whatever stops under the pointer IS the prize the server paid.
 
@@ -5169,6 +5356,7 @@ const FurrySpinWheel = {
       const wheel = document.getElementById('furryWheel');
       if (wheel) {
         STATE.furryScrollPosition += STATE.furryScrollSpeed * (dt / (1000 / 60));
+        STATE.furryScrollPosition += Reel.delta('furry', now);   // spin travel follows the clock, not the frame rate
         const stride = CONFIG.FURRY_CUBE_WIDTH + CONFIG.FURRY_GAP_WIDTH;
 
         while (STATE.furryScrollPosition >= stride) {
@@ -5231,15 +5419,16 @@ const FurrySpinWheel = {
 
     const plan = Reel.plan(cubes, document.querySelector('.furry-wheel-container'), CONFIG.FURRY_CUBE_WIDTH + CONFIG.FURRY_GAP_WIDTH);
     this.renderCube(plan.target, winning);
-    this._landing = { winning };
+    this._landing = { winning, target: plan.target };
+    Reel.start('furry', plan, CONFIG.FURRY_SPIN_DURATION);
 
     const startTime = Date.now();
     const tick = () => {
       if (!STATE.furryIsSpinning) return;
       const progress = Math.min((Date.now() - startTime) / CONFIG.FURRY_SPIN_DURATION, 1);
-      STATE.furryScrollSpeed = plan.peakSpeed(CONFIG.FURRY_SPIN_DURATION) * Math.pow(1 - progress, 4);
+      STATE.furryScrollSpeed = 0;   // the reel is moved by Reel.delta (wall-clock), see Reel
       if (progress < 1) { requestAnimationFrame(tick); }
-      else { STATE.furryScrollSpeed = 0; setTimeout(() => this.snapToCenter(), 100); }
+      else { STATE.furryScrollSpeed = 0; Reel.whenSettled('furry', () => setTimeout(() => this.snapToCenter(), 100)); }
     };
     tick();
   },
@@ -5259,6 +5448,8 @@ const FurrySpinWheel = {
     });
 
     const L = this._landing || {}; this._landing = null;
+    // Always land on the cube that carries the server's prize, wherever the reel really stopped (never swap a prize under the pointer).
+    if (L.target && cubes.includes(L.target)) { const tr = L.target.getBoundingClientRect(); bestCube = L.target; snapDelta = (tr.left + tr.width / 2 - wRect.left) - center; }
 
     // Safety net (e.g. the app was backgrounded mid-spin): whatever stops under the pointer IS the prize the server paid.
 
@@ -5502,6 +5693,7 @@ const HexSpinWheel = {
       const wheel = document.getElementById('hexWheel');
       if (wheel) {
         STATE.hexScrollPosition += STATE.hexScrollSpeed * (dt / (1000 / 60));
+        STATE.hexScrollPosition += Reel.delta('hex', now);   // spin travel follows the clock, not the frame rate
         const stride = CONFIG.HEX_CUBE_WIDTH + CONFIG.HEX_GAP_WIDTH;
 
         while (STATE.hexScrollPosition >= stride) {
@@ -5564,15 +5756,16 @@ const HexSpinWheel = {
 
     const plan = Reel.plan(cubes, document.querySelector('.hex-wheel-container'), CONFIG.HEX_CUBE_WIDTH + CONFIG.HEX_GAP_WIDTH);
     this.renderCube(plan.target, winning);
-    this._landing = { winning };
+    this._landing = { winning, target: plan.target };
+    Reel.start('hex', plan, CONFIG.HEX_SPIN_DURATION);
 
     const startTime = Date.now();
     const tick = () => {
       if (!STATE.hexIsSpinning) return;
       const progress = Math.min((Date.now() - startTime) / CONFIG.HEX_SPIN_DURATION, 1);
-      STATE.hexScrollSpeed = plan.peakSpeed(CONFIG.HEX_SPIN_DURATION) * Math.pow(1 - progress, 4);
+      STATE.hexScrollSpeed = 0;   // the reel is moved by Reel.delta (wall-clock), see Reel
       if (progress < 1) { requestAnimationFrame(tick); }
-      else { STATE.hexScrollSpeed = 0; setTimeout(() => this.snapToCenter(), 100); }
+      else { STATE.hexScrollSpeed = 0; Reel.whenSettled('hex', () => setTimeout(() => this.snapToCenter(), 100)); }
     };
     tick();
   },
@@ -5592,6 +5785,8 @@ const HexSpinWheel = {
     });
 
     const L = this._landing || {}; this._landing = null;
+    // Always land on the cube that carries the server's prize, wherever the reel really stopped (never swap a prize under the pointer).
+    if (L.target && cubes.includes(L.target)) { const tr = L.target.getBoundingClientRect(); bestCube = L.target; snapDelta = (tr.left + tr.width / 2 - wRect.left) - center; }
 
     // Safety net (e.g. the app was backgrounded mid-spin): whatever stops under the pointer IS the prize the server paid.
 
@@ -5839,6 +6034,7 @@ const AstralSpinWheel = {
       const wheel = document.getElementById('astralWheel');
       if (wheel) {
         STATE.astralScrollPosition += STATE.astralScrollSpeed * (dt / (1000 / 60));
+        STATE.astralScrollPosition += Reel.delta('astral', now);   // spin travel follows the clock, not the frame rate
         const stride = CONFIG.ASTRAL_CUBE_WIDTH + CONFIG.ASTRAL_GAP_WIDTH;
 
         while (STATE.astralScrollPosition >= stride) {
@@ -5901,15 +6097,16 @@ const AstralSpinWheel = {
 
     const plan = Reel.plan(cubes, document.querySelector('.astral-wheel-container'), CONFIG.ASTRAL_CUBE_WIDTH + CONFIG.ASTRAL_GAP_WIDTH);
     this.renderCube(plan.target, winning);
-    this._landing = { winning };
+    this._landing = { winning, target: plan.target };
+    Reel.start('astral', plan, CONFIG.ASTRAL_SPIN_DURATION);
 
     const startTime = Date.now();
     const tick = () => {
       if (!STATE.astralIsSpinning) return;
       const progress = Math.min((Date.now() - startTime) / CONFIG.ASTRAL_SPIN_DURATION, 1);
-      STATE.astralScrollSpeed = plan.peakSpeed(CONFIG.ASTRAL_SPIN_DURATION) * Math.pow(1 - progress, 4);
+      STATE.astralScrollSpeed = 0;   // the reel is moved by Reel.delta (wall-clock), see Reel
       if (progress < 1) { requestAnimationFrame(tick); }
-      else { STATE.astralScrollSpeed = 0; setTimeout(() => this.snapToCenter(), 100); }
+      else { STATE.astralScrollSpeed = 0; Reel.whenSettled('astral', () => setTimeout(() => this.snapToCenter(), 100)); }
     };
     tick();
   },
@@ -5929,6 +6126,8 @@ const AstralSpinWheel = {
     });
 
     const L = this._landing || {}; this._landing = null;
+    // Always land on the cube that carries the server's prize, wherever the reel really stopped (never swap a prize under the pointer).
+    if (L.target && cubes.includes(L.target)) { const tr = L.target.getBoundingClientRect(); bestCube = L.target; snapDelta = (tr.left + tr.width / 2 - wRect.left) - center; }
 
     // Safety net (e.g. the app was backgrounded mid-spin): whatever stops under the pointer IS the prize the server paid.
 
@@ -6437,7 +6636,11 @@ const Rocket = {
   cfg() { return GameAPI.cfg?.rocket || { minBet: 50, maxBet: 20000, growth: 0.11, giftTiers: [], nftTiers: [] }; },
   min() { return this.cfg().minBet || 50; },
   isNft: (n) => NFT_GIFTS.includes(n),
-  val(n) { return (this.isNft(n) ? PRIZE_STAR_VALUES[n] : PRIZE_COIN_VALUES[n]) || 0; },
+  val(n) {
+    if (this.isNft(n)) return PRIZE_STAR_VALUES[n] || 0;
+    const c = GameAPI.cfg || {}, v = (c.rocket && c.rocket.values) || (c.battle && c.battle.values);
+    return ((v && v[n] != null) ? v[n] : PRIZE_COIN_VALUES[n]) || 0;
+  },
 
   // ---------- icons ----------
   tile(n) {
@@ -6517,7 +6720,7 @@ const Rocket = {
   },
   startPolling() {
     if (this.poll) return;
-    const tick = async () => { try { this.apply(await GameAPI.req('GET', '/api/rocket/state')); LiveLink.set(false); } catch { LiveLink.set(true); } };
+    const tick = async () => { try { this.apply(await GameAPI.req('GET', '/api/rocket/state')); this.lastRx = Date.now(); LiveLink.set(false); } catch { LiveLink.set(true); } };
     tick(); this.poll = setInterval(tick, 1200);
   },
 
@@ -6531,7 +6734,7 @@ const Rocket = {
     const me = s.me;
     if (me && me.status !== 'active' && this.announced !== s.roundId) { this.announced = s.roundId; this.settled(me); }
     this.renderHistory(); this.renderList(); this.renderButton(); this.renderGifts(); this.renderLadder();
-    const _rf = this.$('#rkFair'); if (_rf) _rf.textContent = s.phase === 'crash' && s.secret ? `Round #${s.roundId} secret: ${s.secret} · sha256 = ${s.hash}` : s.hash ? `Round #${s.roundId} commitment: ${s.hash}` : '';
+    Fair.render('rocket', s);
   },
   tFly() {
     const s = this.snap; if (!s) return 0;
@@ -6539,7 +6742,16 @@ const Rocket = {
     this._frz = null;
     if (s.phase === 'crash') return Math.log(s.crashAt) / this.K;
     if (s.phase !== 'fly') return 0;
-    return Math.max(0, (Date.now() + this.off - s.flyStartedAt) / 1000);
+    // The crash point is secret until it happens, so the number is only ever extrapolated from the last news. If nothing has
+    // arrived for a moment (the server sends a beat every 400 ms) the connection is stalling: stop counting where the last
+    // news left us instead of racing past a crash we have not heard about yet.
+    const at = this.stalled() ? this.lastRx + this.gap() : Date.now();   // hold at the value shown when the beats stopped (never rewind)
+    return Math.max(0, (at + this.off - s.flyStartedAt) / 1000);
+  },
+  gap() { return this.poll ? 3500 : 700; },   // silence allowed before the number is held: ~1.75 beats of the 400 ms heartbeat (polling mode asks only every 1.2 s)
+  stalled() {
+    const s = this.snap;
+    return !!(s && s.phase === 'fly' && this.lastRx && Date.now() - this.lastRx > this.gap());
   },
   mult() {
     const s = this.snap; if (!s) return 1;
@@ -6822,7 +7034,7 @@ const Rocket = {
           const m = this.mult(); num.textContent = m.toFixed(2); unit.textContent = 'x';
           this.$('#rkMult').classList.toggle('gold', s.phase === 'fly' && m >= 5);
           if (s.phase === 'fly') {
-            sub.textContent = me && me.status === 'cashed' ? `You cashed out at ${me.cash_at.toFixed(2)}x` : me ? 'Cash out before it crashes' : 'Round in progress';
+            sub.textContent = this.stalled() ? 'Weak connection…' : me && me.status === 'cashed' ? `You cashed out at ${me.cash_at.toFixed(2)}x` : me ? 'Cash out before it crashes' : 'Round in progress';
             this.paintLadder(m, true); if (me && me.status === 'active') this.renderButton();
           } else sub.textContent = 'Rocket crashed';
         }
@@ -6995,7 +7207,7 @@ const Battle = {
     this.$('#btList').innerHTML = s.players.map((p, i) => `<li class="${p.me ? 'me' : ''} ${i === win ? 'win' : ''}"><span class="rk-av" style="background:${this.COLORS[i % this.COLORS.length]}">${this.av(p)}</span><span class="nm">${this.esc(p.name)}</span><span class="ic">${p.items.map(n => Rocket.img(n)).join('')}</span><span class="rs">${(p.chance * 100).toFixed(1)}%</span></li>`).join('')
       || '<li><span></span><span class="nm rk-dim">Nobody yet — be the first</span><span></span><span></span></li>';
     this.$('#btCount').textContent = s.maxPlayers > 0 ? `${s.players.length}/${s.maxPlayers}` : `${s.players.length}`;
-    const _bf = this.$('#btFair'); if (_bf) _bf.textContent = s.phase === 'result' && s.secret ? `Round #${s.roundId} secret: ${s.secret} · sha256 = ${s.hash}` : s.hash ? `Round #${s.roundId} commitment: ${s.hash}` : '';
+    Fair.render('battle', s);
   },
   renderButton() {
     const s = this.snap, b = this.$('#btGo'); if (!b) return;
@@ -7275,7 +7487,7 @@ async function initializeApp() {
   LoadingScreen.init();
   Navigation.init();
   Menu.init();
-  BottomNav.init();
+  BottomNav.init(); try { Fair.init(); } catch (e) {};
   Settings.init();
   LanguageModal.init();
   Subscription.init();
